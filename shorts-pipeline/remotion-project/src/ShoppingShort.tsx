@@ -1,6 +1,10 @@
 import React from 'react';
 import { AbsoluteFill, Audio, Img, interpolate, staticFile, useCurrentFrame, useVideoConfig } from 'remotion';
 import { z } from 'zod';
+import { loadFont } from '@remotion/google-fonts/NotoSansKR';
+
+// 한글 폰트를 프로젝트에 직접 내장 (렌더링하는 컴퓨터에 폰트가 없어도 항상 정상 표시됨)
+const { fontFamily: koreanFontFamily } = loadFont();
 
 export const captionSchema = z.object({
   text: z.string(),
@@ -51,7 +55,7 @@ export const ShoppingShort: React.FC<Props> = ({
     : 0;
 
   return (
-    <AbsoluteFill style={{ backgroundColor: '#000', fontFamily: 'Pretendard, Apple SD Gothic Neo, sans-serif' }}>
+    <AbsoluteFill style={{ backgroundColor: '#000', fontFamily: `${koreanFontFamily}, sans-serif` }}>
       {/* 배경 제품 이미지 */}
       <AbsoluteFill style={{ transform: `scale(${scale})` }}>
         <Img

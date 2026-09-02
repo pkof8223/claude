@@ -1,0 +1,13 @@
+{
+  "name": "shorts-pipeline-watcher",
+  "version": "1.0.0",
+  "private": true,
+  "type": "commonjs",
+  "scripts": {
+    "watch": "node scripts/watch.js"
+  },
+  "dependencies": {
+    "chokidar": "3.6.0",
+    "dotenv": "16.4.5"
+  }
+}

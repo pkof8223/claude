@@ -1,0 +1,556 @@
+<title>江南夜生活指南</title>
+<style>
+:root{
+  --bg:#faf8fb;
+  --surface:#ffffff;
+  --surface-2:#f2eef7;
+  --ink:#1e1c27;
+  --ink-dim:#6c6880;
+  --line:#e6e2ee;
+  --accent:#d6316f;
+  --accent-strong:#b8215b;
+  --accent-2:#c97a12;
+  --good:#1f9d5c;
+  --good-bg:#e6f7ee;
+  --warn:#a86a00;
+  --warn-bg:#fbf0dc;
+  --shadow:0 10px 30px -14px rgba(30,20,40,.25);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#121017; --surface:#1c1a24; --surface-2:#242230;
+    --ink:#efeaf7; --ink-dim:#a29db8; --line:#332f40;
+    --accent:#ff5da2; --accent-strong:#ff85b8; --accent-2:#ffb84d;
+    --good:#57d38c; --good-bg:#173021; --warn:#ffb84d; --warn-bg:#332608;
+    --shadow:0 10px 30px -14px rgba(0,0,0,.6);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#121017; --surface:#1c1a24; --surface-2:#242230;
+  --ink:#efeaf7; --ink-dim:#a29db8; --line:#332f40;
+  --accent:#ff5da2; --accent-strong:#ff85b8; --accent-2:#ffb84d;
+  --good:#57d38c; --good-bg:#173021; --warn:#ffb84d; --warn-bg:#332608;
+  --shadow:0 10px 30px -14px rgba(0,0,0,.6);
+}
+*{box-sizing:border-box;}
+body{
+  background:var(--bg); color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Helvetica Neue","Microsoft YaHei","Noto Sans SC","Segoe UI",sans-serif;
+  line-height:1.6;
+}
+a{color:inherit;}
+button{font-family:inherit;}
+.app-shell{max-width:480px;margin:0 auto;min-height:100vh;background:var(--bg);position:relative;padding-bottom:26px;}
+@media (min-width:860px){ .app-shell{max-width:900px;} }
+
+/* topbar */
+.topbar{position:sticky;top:0;z-index:20;background:var(--bg);border-bottom:1px solid var(--line);padding:10px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.brand{display:flex;flex-direction:column;line-height:1.25;cursor:pointer;}
+.brand .t{font-size:16px;font-weight:800;letter-spacing:.01em;}
+.brand .s{font-size:11px;color:var(--ink-dim);}
+.topnav{display:flex;gap:4px;font-size:12.5px;}
+.topnav a{padding:7px 10px;border-radius:8px;color:var(--ink-dim);font-weight:600;white-space:nowrap;}
+.topnav a.active,.topnav a:hover{background:var(--surface-2);color:var(--ink);}
+
+/* banner slot */
+.banner-slot{
+  display:flex;align-items:center;justify-content:center;text-align:center;
+  border:1.5px dashed var(--line);border-radius:12px;background:var(--surface-2);
+  color:var(--ink-dim);font-size:12.5px;padding:14px;min-height:64px;margin:12px 16px 0;gap:6px;flex-direction:column;
+}
+.banner-slot.filled{border-style:solid;border-color:var(--line);background:var(--surface);padding:0;overflow:hidden;min-height:0;}
+.banner-slot.filled a{display:block;padding:14px;text-decoration:none;}
+.banner-slot .adv{font-weight:800;font-size:14px;color:var(--ink);}
+.banner-slot .cta{font-size:11.5px;color:var(--accent);}
+.banner-slot.top{aspect-ratio:4/1;}
+.banner-slot.detail-bottom{aspect-ratio:3.6/1;}
+.banner-fill-top{width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 22%,var(--surface)),color-mix(in srgb,var(--accent-2) 18%,var(--surface)));}
+
+/* filter chips */
+.filter-row{display:flex;gap:8px;overflow-x:auto;padding:14px 16px 4px;-ms-overflow-style:none;scrollbar-width:none;}
+.filter-row::-webkit-scrollbar{display:none;}
+.chip{flex:none;padding:7px 14px;border-radius:999px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink-dim);font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;}
+.chip.on{background:var(--accent);border-color:var(--accent);color:#fff;}
+.filter-label{font-size:11px;color:var(--ink-dim);padding:10px 16px 0;font-weight:700;letter-spacing:.03em;}
+
+/* sections */
+.section-title{font-size:13px;font-weight:800;color:var(--ink-dim);letter-spacing:.03em;padding:20px 16px 8px;display:flex;align-items:center;gap:6px;}
+.section-title .badge-pin{background:var(--accent);color:#fff;font-size:10px;padding:2px 7px;border-radius:6px;}
+
+/* venue grid */
+.venue-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:0 16px;}
+@media (min-width:860px){ .venue-grid{grid-template-columns:repeat(3,1fr);} }
+.venue-card{background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden;cursor:pointer;display:flex;flex-direction:column;box-shadow:var(--shadow);position:relative;}
+.venue-card .thumb{aspect-ratio:4/3;display:flex;align-items:center;justify-content:center;font-size:34px;color:#fff;position:relative;}
+.venue-card .pin-tag{position:absolute;top:8px;left:8px;background:rgba(0,0,0,.55);color:#ffd9e8;font-size:10.5px;font-weight:800;padding:3px 8px;border-radius:6px;}
+.venue-card .body{padding:10px 11px 12px;display:flex;flex-direction:column;gap:5px;}
+.venue-card .name-zh{font-size:14.5px;font-weight:800;}
+.venue-card .name-sub{font-size:11px;color:var(--ink-dim);}
+.tag-row{display:flex;flex-wrap:wrap;gap:5px;}
+.tag{font-size:10.5px;padding:2px 7px;border-radius:6px;background:var(--surface-2);color:var(--ink-dim);font-weight:600;}
+.tag.passport{background:var(--warn-bg);color:var(--warn);}
+.fee-line{font-size:12px;color:var(--ink);font-variant-numeric:tabular-nums;font-weight:700;}
+
+/* ad-slot mini card (used inside pinned row / grid) */
+.ad-card{border:1.5px dashed var(--line);border-radius:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:4px;padding:14px;color:var(--ink-dim);font-size:12px;min-height:150px;}
+.ad-card b{color:var(--accent);font-size:13px;}
+
+/* full detail page */
+.detail-hero{position:relative;}
+.gallery{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;-ms-overflow-style:none;scrollbar-width:none;}
+.gallery::-webkit-scrollbar{display:none;}
+.gallery .slide{flex:none;width:100%;scroll-snap-align:start;aspect-ratio:4/3;display:flex;align-items:center;justify-content:center;font-size:52px;color:#fff;}
+.dots{display:flex;gap:5px;justify-content:center;margin-top:8px;}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--line);}
+.dot.on{background:var(--accent);}
+.detail-body{padding:16px;}
+.detail-title-row{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;}
+.detail-title-row h1{font-size:20px;margin:0 0 2px;font-weight:900;}
+.detail-title-row .sub{font-size:12.5px;color:var(--ink-dim);margin:0;}
+.back-btn{border:none;background:var(--surface-2);color:var(--ink);width:34px;height:34px;border-radius:10px;font-size:16px;cursor:pointer;flex:none;}
+
+.taxi-btn{
+  margin-top:14px;width:100%;padding:15px;border-radius:14px;border:none;
+  background:linear-gradient(135deg,var(--accent),var(--accent-strong));
+  color:#fff;font-size:15px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;
+  box-shadow:0 10px 24px -10px color-mix(in srgb,var(--accent) 70%, transparent);
+}
+
+.info-card{background:var(--surface);border:1px solid var(--line);border-radius:14px;margin-top:16px;overflow:hidden;}
+.info-row{display:grid;grid-template-columns:84px 1fr;gap:10px;padding:12px 14px;border-bottom:1px solid var(--line);font-size:13.5px;}
+.info-row:last-child{border-bottom:none;}
+.info-row .k{color:var(--ink-dim);font-weight:700;font-size:12px;padding-top:1px;}
+.info-row .v b{font-weight:800;}
+.passport-yes{color:var(--warn);font-weight:800;}
+.passport-no{color:var(--good);font-weight:800;}
+
+.addr-card{background:var(--surface);border:1px solid var(--line);border-radius:14px;margin-top:16px;padding:14px;}
+.addr-card .lang-line{font-size:13px;margin-bottom:6px;}
+.addr-card .lang-line b{display:inline-block;font-size:10.5px;color:var(--ink-dim);background:var(--surface-2);padding:1px 6px;border-radius:5px;margin-right:6px;font-weight:800;}
+.addr-actions{display:flex;gap:8px;margin-top:10px;}
+.btn-outline{flex:1;text-align:center;padding:10px;border-radius:10px;border:1.5px solid var(--line);background:var(--surface);font-size:12.5px;font-weight:700;text-decoration:none;color:var(--ink);}
+
+.social-row{display:flex;gap:8px;margin-top:14px;}
+.social-pill{font-size:12.5px;background:var(--surface-2);padding:8px 12px;border-radius:10px;font-weight:700;}
+
+/* taxi overlay */
+.taxi-overlay{position:fixed;inset:0;background:#fff;color:#111;z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 20px;text-align:center;}
+.taxi-overlay .hint{font-size:13px;color:#666;margin-bottom:18px;font-weight:700;}
+.taxi-overlay .venue-name{font-size:22px;font-weight:900;margin-bottom:14px;}
+.taxi-overlay .addr{font-size:clamp(26px,8vw,42px);font-weight:900;line-height:1.35;}
+.taxi-overlay .close-x{position:absolute;top:18px;right:18px;width:42px;height:42px;border-radius:50%;border:none;background:#f0f0f0;color:#111;font-size:20px;cursor:pointer;}
+
+/* guides */
+.guide-card{display:flex;gap:12px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:10px;margin:0 16px 12px;cursor:pointer;}
+.guide-card .thumb{flex:none;width:76px;height:76px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:26px;color:#fff;}
+.guide-card .g-title{font-weight:800;font-size:14.5px;margin-bottom:3px;}
+.guide-card .g-excerpt{font-size:12px;color:var(--ink-dim);}
+.guide-content{padding:18px 16px 30px;font-size:15px;}
+.guide-content p{margin:0 0 14px;color:var(--ink);}
+.guide-content h2{font-size:16px;margin:22px 0 8px;}
+
+/* contact form */
+.contact-wrap{padding:18px 16px 40px;}
+.contact-wrap h1{font-size:20px;margin:0 0 4px;}
+.contact-wrap .note{font-size:13px;color:var(--ink-dim);margin-bottom:18px;}
+.field{margin-bottom:14px;}
+.field label{display:block;font-size:13px;font-weight:700;margin-bottom:6px;}
+.field input,.field select,.field textarea{
+  width:100%;padding:11px 12px;border-radius:10px;border:1.5px solid var(--line);
+  background:var(--surface);color:var(--ink);font-size:14px;font-family:inherit;
+}
+.field textarea{min-height:90px;resize:vertical;}
+.submit-btn{width:100%;padding:14px;border:none;border-radius:12px;background:var(--accent);color:#fff;font-weight:800;font-size:15px;cursor:pointer;}
+.success-box{background:var(--good-bg);color:var(--good);border-radius:12px;padding:16px;font-weight:700;font-size:14px;margin-bottom:16px;}
+
+footer.site-footer{padding:26px 16px 10px;color:var(--ink-dim);font-size:11.5px;text-align:center;border-top:1px solid var(--line);margin-top:24px;}
+
+.empty{padding:40px 16px;text-align:center;color:var(--ink-dim);font-size:13.5px;}
+</style>
+
+<div class="app-shell" id="app"></div>
+
+<script>
+/* ============ 가짜(예시) 데이터 — site_settings/venues/guides/banners ============
+   실제 서비스가 되면 이 값들은 전부 관리자 화면에서 수정하는 내용으로 바뀝니다.
+   (제목/부제목/문의처 = site_settings 표, venues/guides/banners = 각 관리 표) */
+const SITE = {
+  title_zh: "江南夜生活指南",
+  subtitle_zh: "俱乐部 · 酒吧 · 酒廊实时资讯",
+  footer_zh: "本站信息仅供参考，实际营业时间、费用与入场规定请以现场公告为准。",
+  contact_hint_zh: "商务合作请见下方「广告合作」页面",
+};
+
+const CATS = [
+  {id:"club", label:"夜店", icon:"🎧"},
+  {id:"cocktail_bar", label:"鸡尾酒吧", icon:"🍸"},
+  {id:"lounge", label:"酒廊", icon:"🛋️"},
+  {id:"rooftop", label:"屋顶酒吧", icon:"🌆"},
+  {id:"pub", label:"酒吧", icon:"🍺"},
+];
+const DISTRICTS = [
+  {id:"gangnam_station", label:"江南站"},
+  {id:"sinnonhyeon", label:"新论岘"},
+  {id:"apgujeong_rodeo", label:"狎鸥亭罗德奥"},
+  {id:"cheongdam", label:"清潭"},
+];
+const catInfo = id => CATS.find(c=>c.id===id);
+const distLabel = id => (DISTRICTS.find(d=>d.id===id)||{}).label || id;
+
+const VENUES = [
+  {id:1,pinned:true,name_zh:"极光俱乐部",name_ko:"클럽 오로라",name_en:"Club AURORA",category:"club",district:"gangnam_station",
+    hours:"周四–周日 22:00–05:00（周一至周三休息）",
+    fee_male:"30,000韩元",fee_female:"20,000韩元",fee_note:"女士周五/周六 21:00前入场免费",
+    dress_code:"禁止拖鞋、短裤、运动鞋",passport_required:true,passport_note:"入口处会核对护照，请务必随身携带",
+    avg_budget:"人均 80,000–120,000韩元（含酒水）",
+    address_ko:"서울특별시 강남구 강남대로102길 23",address_zh:"首尔特别市江南区江南大路102街23号（中文为参考翻译，出示韩文地址即可）",
+    maps_q:"서울 강남구 강남대로102길 23",wechat:"AuroraGN2024",instagram:"@aurora.gangnam"},
+  {id:2,pinned:true,name_zh:"深夜实验室",name_ko:"클럽 미드나잇랩",name_en:"MIDNIGHT LAB",category:"club",district:"sinnonhyeon",
+    hours:"每日 22:30–06:00",
+    fee_male:"25,000韩元",fee_female:"25,000韩元",fee_note:"周日休息日无优惠",
+    dress_code:"需着正装鞋，禁止背心",passport_required:true,passport_note:"外国人一律需出示护照原件",
+    avg_budget:"人均 70,000–100,000韩元",
+    address_ko:"서울특별시 강남구 신논현로 45",address_zh:"首尔特别市江南区新论岘路45号（参考翻译）",
+    maps_q:"서울 강남구 신논현로 45",wechat:"midnightlab_kr",instagram:"@midnightlab.kr"},
+  {id:3,pinned:false,name_zh:"天鹅绒酒廊",name_ko:"라운지 벨벳",name_en:"VELVET Lounge",category:"lounge",district:"apgujeong_rodeo",
+    hours:"周二–周日 19:00–03:00（周一休息）",
+    fee_male:"低消 40,000韩元",fee_female:"低消 40,000韩元",fee_note:"节假日前夜另有加收",
+    dress_code:"建议正装，禁止运动装",passport_required:false,passport_note:"通常不强制查验，建议仍随身携带以备核实",
+    avg_budget:"人均 100,000韩元以上",
+    address_ko:"서울특별시 강남구 압구정로 40길 12",address_zh:"首尔特别市江南区狎鸥亭路40街12号（参考翻译）",
+    maps_q:"서울 강남구 압구정로40길 12",wechat:"",instagram:"@velvet.apgujeong"},
+  {id:4,pinned:false,name_zh:"屋顶天际线",name_ko:"루프탑 스카이라인",name_en:"ROOFTOP SKYLINE",category:"rooftop",district:"cheongdam",
+    hours:"每日 18:00–02:00（雨天视情况休业）",
+    fee_male:"无入场费，需低消",fee_female:"无入场费，需低消",fee_note:"低消每人 30,000韩元起",
+    dress_code:"露天座位，建议携带外套",passport_required:false,passport_note:"点酒水时可能需出示证件确认年龄",
+    avg_budget:"人均 60,000–90,000韩元",
+    address_ko:"서울특별시 강남구 청담동 8길 5",address_zh:"首尔特别市江南区清潭洞8街5号（参考翻译）",
+    maps_q:"서울 강남구 청담동 8길 5",wechat:"skyline_cheongdam",instagram:"@rooftop.skyline"},
+  {id:5,pinned:false,name_zh:"怀旧调酒屋",name_ko:"칵테일바 노스탤지어",name_en:"Cocktail NOSTALGIA",category:"cocktail_bar",district:"apgujeong_rodeo",
+    hours:"周一–周六 20:00–02:00（周日休息）",
+    fee_male:"无入场费",fee_female:"无入场费",fee_note:"人均消费一杯以上",
+    dress_code:"无特殊要求",passport_required:false,passport_note:"无需护照",
+    avg_budget:"人均 40,000–60,000韩元",
+    address_ko:"서울특별시 강남구 압구정로 30길 9",address_zh:"首尔特别市江南区狎鸥亭路30街9号（参考翻译）",
+    maps_q:"서울 강남구 압구정로30길 9",wechat:"",instagram:"@nostalgia.bar"},
+  {id:6,pinned:false,name_zh:"第二街酒吧",name_ko:"펍 세컨스트리트",name_en:"2ND STREET PUB",category:"pub",district:"gangnam_station",
+    hours:"每日 17:00–01:00",
+    fee_male:"无入场费",fee_female:"无入场费",fee_note:"—",
+    dress_code:"无特殊要求",passport_required:false,passport_note:"无需护照",
+    avg_budget:"人均 30,000–50,000韩元",
+    address_ko:"서울특별시 강남구 강남대로 94길 11",address_zh:"首尔特别市江南区江南大路94街11号（参考翻译）",
+    maps_q:"서울 강남구 강남대로94길 11",wechat:"",instagram:""},
+  {id:7,pinned:false,name_zh:"调香师酒廊",name_ko:"라운지 퍼퓨머",name_en:"PERFUMER Lounge",category:"lounge",district:"sinnonhyeon",
+    hours:"周三–周日 20:00–04:00",
+    fee_male:"低消 50,000韩元",fee_female:"低消 30,000韩元",fee_note:"生日派对需提前预约",
+    dress_code:"禁止短裤、凉拖",passport_required:true,passport_note:"外国籍顾客需出示护照登记",
+    avg_budget:"人均 120,000韩元以上",
+    address_ko:"서울특별시 강남구 신논현로19길 6",address_zh:"首尔特别市江南区新论岘路19街6号（参考翻译）",
+    maps_q:"서울 강남구 신논현로19길 6",wechat:"perfumer_lounge",instagram:"@perfumer.lounge"},
+  {id:8,pinned:false,name_zh:"月光调酒实验室",name_ko:"칵테일바 문라이트",name_en:"Cocktail MOONLIGHT",category:"cocktail_bar",district:"cheongdam",
+    hours:"每日 19:00–03:00",
+    fee_male:"无入场费",fee_female:"无入场费",fee_note:"—",
+    dress_code:"无特殊要求",passport_required:true,passport_note:"深夜时段可能要求出示护照核实年龄",
+    avg_budget:"人均 70,000韩元",
+    address_ko:"서울특별시 강남구 도산대로 55길 18",address_zh:"首尔特别市江南区岛山大路55街18号（参考翻译）",
+    maps_q:"서울 강남구 도산대로55길 18",wechat:"",instagram:"@moonlight.cocktail"},
+];
+
+const GUIDES = [
+  {id:1,title:"为什么进韩国夜店必须带护照？",cover:"🛂",
+   body:["韩国法律规定，娱乐场所需对外国顾客进行身份核实，护照是唯一被普遍接受的证件——手机里的护照照片通常不算数。",
+         "建议出行前把护照原件放进随身小包，不要留在酒店保险箱。部分场所对韩国本地顾客只需身份证，但外国顾客几乎都会被要求出示护照。",
+         "如果护照正在办理签证延期等原因暂时无法带出，建议提前用中文或韩文向店员说明情况，但能否入场仍由现场决定。"]},
+  {id:2,title:"江南夜店着装规范（Dress Code）完全指南",cover:"👗",
+   body:["大部分俱乐部和高端酒廊禁止拖鞋、短裤、人字拖、破洞过多的裤子和运动鞋，部分场所对男士要求皮鞋。",
+         "屋顶酒吧和普通酒吧要求相对宽松，但夜间室外温差大，建议携带一件外套。",
+         "不确定当晚着装是否合规时，可以在业务详情页查看该店具体的 Dress Code 说明，或到店前用页面上的微信/Instagram联系确认。"]},
+  {id:3,title:"打车报地址攻略：如何让司机秒懂你的目的地",cover:"🚕",
+   body:["韩国出租车司机大多不使用中文地图软件，直接说中文地名很容易听不懂，最稳妥的方式是直接出示韩文地址。",
+         "本站每个业务详情页都有「向司机出示」按钮，点击后会用超大字体全屏显示韩文地址和店名，把手机递给司机看即可，不需要开口说韩语。",
+         "上车后可以先说「기사님(师傅)」引起注意，再把手机递过去，比反复尝试发音更快、更准确。"]},
+  {id:4,title:"第一次来江南？俱乐部/酒吧/酒廊有什么区别",cover:"🗺️",
+   body:["「夜店」通常指有DJ和舞池的大型场所，人多、音乐大声，适合想蹦迪的顾客；入场费与着装要求也最严格。",
+         "「酒廊」和「鸡尾酒吧」更安静，适合坐下慢慢喝酒聊天，通常按低消（最低消费）计费而不是单独收入场费。",
+         "「屋顶酒吧」主打风景和拍照，「Pub」则最随意、门槛最低，很适合作为一晚的第一站。"]},
+];
+
+/* 배너: 자리별 등록 현황 (비어있으면 광고 안내 표시) */
+const BANNERS = {
+  top: null, // 아직 판매 안 됨 → 안내 표시
+  list_insert: [
+    {advertiser:"美妆免税店 K-BEAUTY PASS", link:"#"},
+  ], // 최대 2개 중 1개만 채워짐
+  detail_bottom: [
+    {advertiser:"江南观光出租车包车服务", link:"#"},
+    {advertiser:"中文导游陪同预约", link:"#"},
+  ], // 최대 3개 중 2개, 자동 순환
+  pinned_ad_slots: 1, // 상단고정 최대 3개 중 2개는 실제 업소(pinned), 1자리는 광고문의 안내
+};
+
+/* ============ 라우터 ============ */
+const app = document.getElementById("app");
+function nav(hash){ location.hash = hash; }
+window.addEventListener("hashchange", render);
+window.addEventListener("DOMContentLoaded", render);
+
+function route(){
+  const h = location.hash.replace(/^#\/?/, "");
+  const parts = h.split("/").filter(Boolean);
+  return {name: parts[0]||"home", arg: parts[1]};
+}
+
+function topbar(active){
+  return `
+  <div class="topbar">
+    <div class="brand" onclick="nav('')">
+      <span class="t">${SITE.title_zh}</span>
+      <span class="s">${SITE.subtitle_zh}</span>
+    </div>
+    <div class="topnav">
+      <a href="#/" class="${active==='home'?'active':''}">首页</a>
+      <a href="#/guides" class="${active==='guides'?'active':''}">攻略</a>
+      <a href="#/contact" class="${active==='contact'?'active':''}">广告合作</a>
+    </div>
+  </div>`;
+}
+
+function footer(){
+  return `<footer class="site-footer">${SITE.footer_zh}<br>${SITE.contact_hint_zh}</footer>`;
+}
+
+function bannerSlot(kind, cls, label){
+  if(kind==='top'){
+    if(!BANNERS.top) return `<div class="banner-slot top"><div>📢 <b>在这里投放广告 / 广告招商</b></div><div style="font-size:11px">首页顶部 · 独占展示位</div></div>`;
+  }
+  if(kind==='list'){
+    const filled = BANNERS.list_insert[0];
+    if(!filled) return `<div class="banner-slot"><div>📢 广告招商</div><div style="font-size:11px">列表插入位 · 最多2个</div></div>`;
+    return `<div class="banner-slot filled"><a href="${filled.link}"><div class="adv">${filled.advertiser}</div><div class="cta">点击了解详情 →</div></a></div>`;
+  }
+  if(kind==='detail'){
+    if(BANNERS.detail_bottom.length===0) return `<div class="banner-slot detail-bottom"><div>📢 广告招商</div><div style="font-size:11px">详情页底部 · 最多3个轮播</div></div>`;
+    const idx = Math.floor(Date.now()/4000) % BANNERS.detail_bottom.length;
+    const b = BANNERS.detail_bottom[idx];
+    return `<div class="banner-slot filled detail-bottom"><a href="${b.link}"><div class="adv">${b.advertiser}</div><div class="cta">点击了解详情 →</div></a></div>`;
+  }
+  return "";
+}
+
+function venueThumb(v, big){
+  const c = catInfo(v.category);
+  const grad = `linear-gradient(135deg, color-mix(in srgb, var(--accent) 55%, #333), color-mix(in srgb, var(--accent-2) 45%, #222))`;
+  return `<div class="${big?'slide':'thumb'}" style="background:${grad}">${c.icon}</div>`;
+}
+
+function venueCard(v){
+  const c = catInfo(v.category);
+  return `
+  <div class="venue-card" onclick="nav('venue/${v.id}')">
+    ${v.pinned?'<div class="pin-tag">⭐ 推荐</div>':''}
+    ${venueThumb(v)}
+    <div class="body">
+      <div class="name-zh">${v.name_zh}</div>
+      <div class="name-sub">${v.name_ko} · ${v.name_en}</div>
+      <div class="tag-row">
+        <span class="tag">${c.icon} ${c.label}</span>
+        <span class="tag">${distLabel(v.district)}</span>
+        ${v.passport_required?'<span class="tag passport">需护照</span>':''}
+      </div>
+      <div class="fee-line">${v.fee_female}${v.fee_male!==v.fee_female?' / '+v.fee_male:''}</div>
+    </div>
+  </div>`;
+}
+
+/* ============ 페이지: 메인 ============ */
+let activeCat = "all", activeDist = "all";
+function pageHome(){
+  const pinned = VENUES.filter(v=>v.pinned).slice(0,3);
+  const adSlots = Math.max(0, 3 - pinned.length);
+  let list = VENUES.filter(v => (activeCat==="all"||v.category===activeCat) && (activeDist==="all"||v.district===activeDist));
+
+  const catChips = [{id:"all",label:"全部",icon:"✨"},...CATS].map(c=>
+    `<div class="chip ${activeCat===c.id?'on':''}" onclick="setFilter('cat','${c.id}')">${c.icon} ${c.label}</div>`).join("");
+  const distChips = [{id:"all",label:"全部地区"},...DISTRICTS].map(d=>
+    `<div class="chip ${activeDist===d.id?'on':''}" onclick="setFilter('dist','${d.id}')">${d.label}</div>`).join("");
+
+  let gridHtml = "";
+  list.forEach((v,i)=>{
+    gridHtml += venueCard(v);
+    if(i===3){ // 5번째 카드 자리(0-index 4) 전에 삽입 배너 데모
+      gridHtml += `<div style="grid-column:1/-1">${bannerSlot('list')}</div>`;
+    }
+  });
+  if(list.length===0) gridHtml = `<div class="empty" style="grid-column:1/-1">该筛选条件下暂无符合的场所 🙈</div>`;
+
+  app.innerHTML = `
+    ${topbar('home')}
+    ${bannerSlot('top')}
+    <div class="filter-label">分类</div>
+    <div class="filter-row">${catChips}</div>
+    <div class="filter-label">地区</div>
+    <div class="filter-row">${distChips}</div>
+
+    ${pinned.length||adSlots>0 ? `<div class="section-title"><span class="badge-pin">推荐</span>置顶展示位</div>
+    <div class="venue-grid">
+      ${pinned.map(v=>venueCard(v)).join("")}
+      ${Array.from({length:adSlots}).map(()=>`<div class="ad-card"><b>📢 广告招商</b>首页置顶推荐位<br>剩余 ${adSlots} 个名额<br><a href="#/contact" style="color:var(--accent);font-weight:800;">立即咨询 →</a></div>`).join("")}
+    </div>`:""}
+
+    <div class="section-title">全部场所 · ${list.length}家</div>
+    <div class="venue-grid">${gridHtml}</div>
+    ${footer()}
+  `;
+}
+function setFilter(kind,val){
+  if(kind==='cat') activeCat=val; else activeDist=val;
+  pageHome();
+}
+
+/* ============ 페이지: 업소 상세 ============ */
+function pageVenue(id){
+  const v = VENUES.find(x=>String(x.id)===String(id));
+  if(!v){ app.innerHTML = topbar()+`<div class="empty">未找到该场所</div>`; return; }
+  const c = catInfo(v.category);
+  const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(v.maps_q)}`;
+
+  app.innerHTML = `
+    ${topbar()}
+    <div class="detail-hero">
+      <div class="gallery">${[1,2,3].map(()=>venueThumb(v,true)).join("")}</div>
+      <div class="dots">${[1,2,3].map((_,i)=>`<div class="dot ${i===0?'on':''}"></div>`).join("")}</div>
+    </div>
+    <div class="detail-body">
+      <div class="detail-title-row">
+        <div>
+          <h1>${v.name_zh}</h1>
+          <p class="sub">${v.name_ko} · ${v.name_en}</p>
+        </div>
+        <button class="back-btn" onclick="history.back()">←</button>
+      </div>
+      <div class="tag-row" style="margin-top:8px;">
+        <span class="tag">${c.icon} ${c.label}</span>
+        <span class="tag">${distLabel(v.district)}</span>
+        ${v.passport_required?'<span class="tag passport">需护照</span>':''}
+      </div>
+
+      <button class="taxi-btn" onclick="openTaxi(${v.id})">🚕 向司机出示 / 택시 기사에게 보여주기</button>
+
+      <div class="info-card">
+        <div class="info-row"><div class="k">营业时间</div><div class="v">${v.hours}</div></div>
+        <div class="info-row"><div class="k">入场费</div><div class="v"><b>女 ${v.fee_female}</b> · 男 ${v.fee_male}<br><span style="color:var(--ink-dim);font-size:12px">${v.fee_note}</span></div></div>
+        <div class="info-row"><div class="k">Dress Code</div><div class="v">${v.dress_code}</div></div>
+        <div class="info-row"><div class="k">护照要求</div><div class="v"><span class="${v.passport_required?'passport-yes':'passport-no'}">${v.passport_required?'必须携带护照':'通常无需护照'}</span><br><span style="color:var(--ink-dim);font-size:12px">${v.passport_note}</span></div></div>
+        <div class="info-row"><div class="k">人均预算</div><div class="v">${v.avg_budget}</div></div>
+      </div>
+
+      <div class="addr-card">
+        <div class="lang-line"><b>KO</b>${v.address_ko}</div>
+        <div class="lang-line"><b>ZH</b>${v.address_zh}</div>
+        <div class="addr-actions">
+          <a class="btn-outline" href="${mapsUrl}" target="_blank" rel="noopener">📍 Google 地图</a>
+        </div>
+      </div>
+
+      ${(v.wechat||v.instagram)?`<div class="social-row">
+        ${v.wechat?`<div class="social-pill">💬 WeChat: ${v.wechat}</div>`:""}
+        ${v.instagram?`<div class="social-pill">📷 ${v.instagram}</div>`:""}
+      </div>`:""}
+
+      ${bannerSlot('detail')}
+    </div>
+    ${footer()}
+    <div id="taxi-root"></div>
+  `;
+}
+
+function openTaxi(id){
+  const v = VENUES.find(x=>String(x.id)===String(id));
+  const root = document.getElementById("taxi-root");
+  root.innerHTML = `
+  <div class="taxi-overlay">
+    <button class="close-x" onclick="document.getElementById('taxi-root').innerHTML=''">✕</button>
+    <div class="hint">请把手机递给司机 · 기사님께 보여주세요</div>
+    <div class="venue-name">${v.name_ko} · ${v.name_zh}</div>
+    <div class="addr">${v.address_ko}</div>
+  </div>`;
+}
+
+/* ============ 페이지: 가이드 ============ */
+function pageGuides(){
+  app.innerHTML = `
+    ${topbar('guides')}
+    <div class="section-title">出行攻略</div>
+    ${GUIDES.map(g=>`
+      <div class="guide-card" onclick="nav('guide/${g.id}')">
+        <div class="thumb" style="background:linear-gradient(135deg,color-mix(in srgb,var(--accent-2) 55%,#333),color-mix(in srgb,var(--accent) 40%,#222))">${g.cover}</div>
+        <div>
+          <div class="g-title">${g.title}</div>
+          <div class="g-excerpt">${g.body[0].slice(0,42)}…</div>
+        </div>
+      </div>`).join("")}
+    ${footer()}
+  `;
+}
+function pageGuideDetail(id){
+  const g = GUIDES.find(x=>String(x.id)===String(id));
+  if(!g){ app.innerHTML = topbar()+`<div class="empty">未找到该文章</div>`; return; }
+  app.innerHTML = `
+    ${topbar('guides')}
+    <div class="detail-body" style="padding-bottom:0;">
+      <div class="detail-title-row">
+        <h1 style="font-size:19px;">${g.cover} ${g.title}</h1>
+        <button class="back-btn" onclick="nav('guides')">←</button>
+      </div>
+    </div>
+    <div class="guide-content">${g.body.map(p=>`<p>${p}</p>`).join("")}</div>
+    ${footer()}
+  `;
+}
+
+/* ============ 페이지: 광고 문의 (한국어) ============ */
+function pageContact(justSubmitted){
+  app.innerHTML = `
+    ${topbar('contact')}
+    <div class="contact-wrap">
+      <h1>광고 문의</h1>
+      <p class="note">배너 광고 · 상단 고정 노출 문의는 아래 양식을 작성해주세요. 담당자가 직접 연락드립니다.</p>
+      ${justSubmitted?`<div class="success-box">✅ 문의가 접수되었습니다. 확인 후 담당자가 연락드리겠습니다.</div>`:""}
+      <form id="contact-form">
+        <div class="field"><label>업소명</label><input required name="venue_name" placeholder="예: OO클럽"></div>
+        <div class="field"><label>담당자명</label><input required name="contact_name" placeholder="담당자 성함"></div>
+        <div class="field"><label>연락처</label><input required name="phone" placeholder="010-0000-0000"></div>
+        <div class="field"><label>희망 광고 자리</label>
+          <select name="position">
+            <option>상단 배너</option>
+            <option>목록 삽입 배너</option>
+            <option>상세 하단 배너</option>
+            <option>상단 고정 노출</option>
+          </select>
+        </div>
+        <div class="field"><label>문의 내용</label><textarea name="message" placeholder="문의하실 내용을 적어주세요"></textarea></div>
+        <button class="submit-btn" type="submit">문의 제출</button>
+      </form>
+    </div>
+    ${footer()}
+  `;
+  document.getElementById("contact-form").addEventListener("submit", e=>{
+    e.preventDefault();
+    pageContact(true);
+    window.scrollTo(0,0);
+  });
+}
+
+/* ============ render ============ */
+function render(){
+  const r = route();
+  if(r.name==='home') pageHome();
+  else if(r.name==='venue') pageVenue(r.arg);
+  else if(r.name==='guides') pageGuides();
+  else if(r.name==='guide') pageGuideDetail(r.arg);
+  else if(r.name==='contact') pageContact(false);
+  else pageHome();
+  window.scrollTo(0,0);
+}
+render();
+</script>

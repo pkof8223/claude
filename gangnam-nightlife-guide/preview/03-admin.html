@@ -165,6 +165,23 @@ footer.site-footer{padding:26px 16px 10px;color:var(--ink-dim);font-size:11.5px;
 .err-box{background:var(--danger-bg);color:var(--danger);border-radius:10px;padding:12px;font-size:13px;font-weight:700;margin-bottom:14px;}
 .loading{padding:60px 16px;text-align:center;color:var(--ink-dim);font-size:13.5px;}
 select#f_status_i, select.status-select{width:auto;padding:6px 10px;font-size:12px;}
+
+/* ---- stats ---- */
+.stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+.stat-tile{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 10px;text-align:center;}
+.stat-tile .v{font-size:20px;font-weight:900;font-variant-numeric:tabular-nums;}
+.stat-tile .k{font-size:11px;color:var(--ink-dim);margin-top:2px;font-weight:700;}
+.table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface);}
+.stats-table{width:100%;border-collapse:collapse;font-size:12.5px;white-space:nowrap;}
+.stats-table th{text-align:left;padding:10px 12px;background:var(--surface-2);color:var(--ink-dim);font-weight:700;font-size:11px;}
+.stats-table td{padding:9px 12px;border-top:1px solid var(--line);font-variant-numeric:tabular-nums;}
+.report-card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:28px 22px;text-align:center;margin-top:6px;}
+.report-title{font-size:19px;font-weight:900;}
+.report-sub{font-size:12.5px;color:var(--ink-dim);margin-top:4px;}
+.report-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:22px;}
+.report-stats .v{font-size:26px;font-weight:900;font-variant-numeric:tabular-nums;color:var(--accent);}
+.report-stats .k{font-size:11.5px;color:var(--ink-dim);margin-top:3px;font-weight:700;}
+.report-footer{margin-top:24px;padding-top:14px;border-top:1px dashed var(--line);font-size:11px;color:var(--ink-dim);}
 </style>
 
 <div class="app-shell" id="app"></div>
@@ -179,7 +196,8 @@ let DB = null;
 let VENUES=[], GUIDES=[], BANNERS=[], INQUIRIES=[];
 let SETTINGS = {title_zh:"", subtitle_zh:"", footer_zh:"", contact_hint_zh:""};
 let ADMIN_CREDS = {username:"", password:""};
-let ready = {venues:false, guides:false, banners:false, settings:false, admin:false, inquiries:false};
+let ready = {venues:false, guides:false, banners:false, settings:false, admin:false, inquiries:false, daily:false, venueViews:false, bannerStats:false};
+let DAILY_STATS=[], VENUE_VIEWS=[], BANNER_STATS=[];
 
 const CATS = [
   {id:"club", label:"夜店", label_ko:"클럽", icon:"🎧"},
@@ -212,6 +230,99 @@ function bannerActive(b){
 function daysUntil(dateStr){
   if(!dateStr) return Infinity;
   return Math.ceil((new Date(dateStr) - new Date(todayStr())) / 86400000);
+}
+
+/* ==========================================================================
+   방문자 통계 — 하루 단위로 문서 하나에 모아 집계 (이벤트를 낱개로 쌓지 않음).
+   실제 배포판(Cloudflare)에서는 이 로직을 서버 쪽(Workers)에서 처리하고,
+   국가/봇 판별은 Cloudflare가 요청마다 자동으로 제공하는 정보를 씁니다.
+   ========================================================================== */
+function getVisitorId(){
+  let id = localStorage.getItem("gnl_visitor_id");
+  if(!id){ id = "v_"+Date.now().toString(36)+Math.random().toString(36).slice(2,10); localStorage.setItem("gnl_visitor_id", id); }
+  return id;
+}
+const BOT_UA_HINTS = ["bot","spider","crawl","curl","wget","python-requests","headlesschrome","phantomjs","facebookexternalhit"];
+function isLikelyBot(){
+  if(navigator.webdriver) return true;
+  const ua = (navigator.userAgent||"").toLowerCase();
+  return BOT_UA_HINTS.some(h=>ua.includes(h));
+}
+function classifyReferrer(){
+  const r = (document.referrer||"").toLowerCase();
+  if(!r) return "direct";
+  if(r.includes("xiaohongshu")||r.includes("xhscdn")||r.includes("xhs.")) return "xhs";
+  return "other";
+}
+const SESSION_REFERRER = classifyReferrer();
+const SESSION_LANG = (navigator.language||"other").toLowerCase().startsWith("zh") ? "zh" : "other";
+const SESSION_IS_BOT = isLikelyBot();
+
+function pruneOldDates(map, keep){
+  const keys = Object.keys(map).sort();
+  while(keys.length > keep){ delete map[keys.shift()]; }
+  return map;
+}
+async function bumpDailyStats(kind){ // kind: 'pageview'
+  if(SESSION_IS_BOT){
+    const t = todayStr();
+    const ref = DB.doc("daily_stats/"+t);
+    const snap = await ref.get();
+    const d = snap.exists ? snap.data() : {page_views:0, visitor_ids:[], xhs:0, direct:0, other:0, lang_zh:0, lang_other:0, bot_blocked:0};
+    d.bot_blocked = (d.bot_blocked||0) + 1;
+    await ref.set(d);
+    return;
+  }
+  const t = todayStr();
+  const vid = getVisitorId();
+  const ref = DB.doc("daily_stats/"+t);
+  const snap = await ref.get();
+  const d = snap.exists ? snap.data() : {page_views:0, visitor_ids:[], xhs:0, direct:0, other:0, lang_zh:0, lang_other:0, bot_blocked:0};
+  d.page_views = (d.page_views||0) + 1;
+  d.visitor_ids = d.visitor_ids||[];
+  if(!d.visitor_ids.includes(vid)){
+    d.visitor_ids.push(vid);
+    d[SESSION_REFERRER] = (d[SESSION_REFERRER]||0) + 1;
+    d["lang_"+SESSION_LANG] = (d["lang_"+SESSION_LANG]||0) + 1;
+  }
+  await ref.set(d);
+}
+async function bumpVenueView(venueId){
+  if(SESSION_IS_BOT) return;
+  const t = todayStr();
+  const ref = DB.collection("venue_views").doc(venueId);
+  const snap = await ref.get();
+  const d = snap.exists ? snap.data() : {total:0, by_date:{}};
+  d.total = (d.total||0) + 1;
+  d.by_date = d.by_date||{};
+  d.by_date[t] = (d.by_date[t]||0) + 1;
+  pruneOldDates(d.by_date, 30);
+  await ref.set(d);
+}
+async function bumpBannerStat(bannerId, field){ // field: 'impressions' | 'clicks'
+  if(SESSION_IS_BOT) return;
+  const ref = DB.collection("banner_stats").doc(bannerId);
+  const snap = await ref.get();
+  const d = snap.exists ? snap.data() : {impressions:0, clicks:0};
+  d[field] = (d[field]||0) + 1;
+  await ref.set(d);
+}
+function logBannerClick(bannerId, linkUrl, ev){
+  bumpBannerStat(bannerId, "clicks");
+  if(!linkUrl || linkUrl==='#'){ ev.preventDefault(); alert("(데모 배너입니다 — 실제 광고주 링크가 연결되면 그 페이지로 이동합니다)"); }
+}
+let lastTrackedHash = null;
+function trackRouteChange(){
+  // 해시가 바뀔 때 딱 한 번만 집계합니다 — db 쓰기 → onSnapshot → 재렌더링이
+  // 다시 여기로 들어와도(같은 해시) 아래에서 막혀서 중복 집계되지 않습니다.
+  const h = location.hash;
+  if(h===lastTrackedHash) return;
+  lastTrackedHash = h;
+  const p = h.replace(/^#\/?/, "").split("/").filter(Boolean);
+  bumpDailyStats();
+  if(p[0]==='venue' && p[1]) bumpVenueView(p[1]);
+  if(!p[0]){ const t=pickBanner('top'); if(t) bumpBannerStat(t.id,'impressions'); const l=pickBanner('list'); if(l) bumpBannerStat(l.id,'impressions'); }
+  else if(p[0]==='venue'){ const d=pickBanner('detail'); if(d) bumpBannerStat(d.id,'impressions'); }
 }
 
 /* ============ 이미지 첨부 → 압축 → data URL (별도 서버 업로드 없이 바로 저장) ============ */
@@ -252,6 +363,9 @@ window.addEventListener("hashchange", render);
   DB.collection("inquiries").onSnapshot(s=>{ INQUIRIES = s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.created_at||"").localeCompare(a.created_at||"")); ready.inquiries=true; render(); });
   DB.doc("settings/site").onSnapshot(s=>{ if(s.exists) SETTINGS = s.data(); ready.settings=true; render(); });
   DB.doc("settings/admin").onSnapshot(s=>{ if(s.exists) ADMIN_CREDS = s.data(); ready.admin=true; render(); });
+  DB.collection("daily_stats").onSnapshot(s=>{ DAILY_STATS = s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>a.id.localeCompare(b.id)); ready.daily=true; render(); });
+  DB.collection("venue_views").onSnapshot(s=>{ VENUE_VIEWS = s.docs.map(d=>({id:d.id,...d.data()})); ready.venueViews=true; render(); });
+  DB.collection("banner_stats").onSnapshot(s=>{ BANNER_STATS = s.docs.map(d=>({id:d.id,...d.data()})); ready.bannerStats=true; render(); });
 })();
 
 function isAdminLoggedIn(){ return sessionStorage.getItem("gnl_admin") === "1"; }
@@ -265,7 +379,7 @@ function render(){
   if(!Object.values(ready).every(Boolean)){ app.innerHTML = `<div class="loading">불러오는 중...</div>`; return; }
   const p = routeParts();
   if(p[0] === "admin") renderAdmin(p.slice(1));
-  else renderPublic(p);
+  else { renderPublic(p); trackRouteChange(); }
   window.scrollTo(0,0);
 }
 
@@ -296,24 +410,31 @@ function venueThumb(v, big){
   if(photo) return `<div class="${big?'slide':'thumb'}"><img src="${photo}" alt=""></div>`;
   return `<div class="${big?'slide':'thumb'}" style="background:${grad}">${c.icon}</div>`;
 }
-function bannerSlot(kind){
-  if(kind==='top'){
-    const b = BANNERS.find(x=>x.position==='top' && bannerActive(x));
-    if(!b) return `<div class="banner-slot top"><div>📢 <b>在这里投放广告 / 广告招商</b></div><div style="font-size:11px">首页顶部 · 独占展示位</div></div>`;
-    return `<div class="banner-slot filled top"><a href="${b.link_url||'#'}" target="_blank" rel="noopener">${b.image?`<img class="banner-img" src="${b.image}">`:`<div class="adv" style="padding:14px">${b.advertiser_name}</div>`}</a></div>`;
-  }
-  if(kind==='list'){
-    const list = BANNERS.filter(x=>x.position==='list' && bannerActive(x));
-    if(list.length===0) return `<div class="banner-slot"><div>📢 广告招商</div><div style="font-size:11px">列表插入位 · 最多2个</div></div>`;
-    const b = list[0];
-    return `<div class="banner-slot filled">${b.image?`<a href="${b.link_url||'#'}" target="_blank" rel="noopener"><img class="banner-img" src="${b.image}" style="max-height:120px"></a>`:`<a href="${b.link_url||'#'}" target="_blank" rel="noopener" style="padding:14px;display:block"><div class="adv">${b.advertiser_name}</div><div class="cta">点击了解详情 →</div></a>`}</div>`;
-  }
+function pickBanner(kind){
+  if(kind==='top') return BANNERS.find(x=>x.position==='top' && bannerActive(x)) || null;
+  if(kind==='list'){ const list = BANNERS.filter(x=>x.position==='list' && bannerActive(x)); return list[0] || null; }
   if(kind==='detail'){
     const list = BANNERS.filter(x=>x.position==='detail' && bannerActive(x));
-    if(list.length===0) return `<div class="banner-slot detail-bottom"><div>📢 广告招商</div><div style="font-size:11px">详情页底部 · 最多3个轮播</div></div>`;
-    const idx = Math.floor(Date.now()/4000) % list.length;
-    const b = list[idx];
-    return `<div class="banner-slot filled detail-bottom">${b.image?`<a href="${b.link_url||'#'}" target="_blank" rel="noopener"><img class="banner-img" src="${b.image}"></a>`:`<a href="${b.link_url||'#'}" target="_blank" rel="noopener" style="padding:14px;display:block"><div class="adv">${b.advertiser_name}</div><div class="cta">点击了解详情 →</div></a>`}</div>`;
+    if(!list.length) return null;
+    return list[Math.floor(Date.now()/4000) % list.length];
+  }
+  return null;
+}
+function bannerSlot(kind){
+  if(kind==='top'){
+    const b = pickBanner('top');
+    if(!b) return `<div class="banner-slot top"><div>📢 <b>在这里投放广告 / 广告招商</b></div><div style="font-size:11px">首页顶部 · 独占展示位</div></div>`;
+    return `<div class="banner-slot filled top"><a href="${b.link_url||'#'}" target="_blank" rel="noopener" onclick="logBannerClick('${b.id}','${b.link_url||''}',event)">${b.image?`<img class="banner-img" src="${b.image}">`:`<div class="adv" style="padding:14px">${b.advertiser_name}</div>`}</a></div>`;
+  }
+  if(kind==='list'){
+    const b = pickBanner('list');
+    if(!b) return `<div class="banner-slot"><div>📢 广告招商</div><div style="font-size:11px">列表插入位 · 最多2个</div></div>`;
+    return `<div class="banner-slot filled">${b.image?`<a href="${b.link_url||'#'}" target="_blank" rel="noopener" onclick="logBannerClick('${b.id}','${b.link_url||''}',event)"><img class="banner-img" src="${b.image}" style="max-height:120px"></a>`:`<a href="${b.link_url||'#'}" target="_blank" rel="noopener" onclick="logBannerClick('${b.id}','${b.link_url||''}',event)" style="padding:14px;display:block"><div class="adv">${b.advertiser_name}</div><div class="cta">点击了解详情 →</div></a>`}</div>`;
+  }
+  if(kind==='detail'){
+    const b = pickBanner('detail');
+    if(!b) return `<div class="banner-slot detail-bottom"><div>📢 广告招商</div><div style="font-size:11px">详情页底部 · 最多3个轮播</div></div>`;
+    return `<div class="banner-slot filled detail-bottom">${b.image?`<a href="${b.link_url||'#'}" target="_blank" rel="noopener" onclick="logBannerClick('${b.id}','${b.link_url||''}',event)"><img class="banner-img" src="${b.image}"></a>`:`<a href="${b.link_url||'#'}" target="_blank" rel="noopener" onclick="logBannerClick('${b.id}','${b.link_url||''}',event)" style="padding:14px;display:block"><div class="adv">${b.advertiser_name}</div><div class="cta">点击了解详情 →</div></a>`}</div>`;
   }
   return "";
 }
@@ -507,7 +628,7 @@ function adminLogout(){ sessionStorage.removeItem("gnl_admin"); nav(""); }
 function adminShell(active){
   const tabs = [
     ["venues","업소 관리"],["guides","가이드 관리"],["banners","배너 관리"],
-    ["settings","사이트 설정"],["inquiries","문의함"],
+    ["settings","사이트 설정"],["inquiries","문의함"],["stats","방문자 통계"],
   ];
   return `
     <div class="admin-topbar">
@@ -725,7 +846,7 @@ function bannerListView(){
           <div class="thumb-sm" style="background:linear-gradient(135deg,var(--accent),var(--accent-2))">${b.image?`<img src="${b.image}">`:'📢'}</div>
           <div class="main"><div class="t1">${b.advertiser_name} · ${(POSITIONS.find(p=>p.id===b.position)||{}).label||b.position}</div>
           <div class="t2">${b.start_date||'-'} ~ ${b.end_date||'-'} ${bannerStatusPill(b)}</div></div>
-          <div class="acts"><a class="btn ghost small" href="#/admin/banners/edit/${b.id}">수정</a><button class="btn danger small" onclick="deleteBanner('${b.id}')">삭제</button></div>
+          <div class="acts"><a class="btn ghost small" href="#/admin/banners/report/${b.id}">리포트</a><a class="btn ghost small" href="#/admin/banners/edit/${b.id}">수정</a><button class="btn danger small" onclick="deleteBanner('${b.id}')">삭제</button></div>
         </div>`).join("") || `<div class="empty">등록된 배너가 없습니다.</div>`}
     </div>
   </div>`;
@@ -828,6 +949,128 @@ function inquiriesView(){
 }
 async function updateInquiryStatus(id, status){ await DB.collection("inquiries").doc(id).update({status}); }
 
+function lineChartSVG(dates, values, color){
+  const w=600, h=150, pad={l:30,r:10,t:12,b:20};
+  const innerW=w-pad.l-pad.r, innerH=h-pad.t-pad.b;
+  const maxV = Math.max(1, ...values);
+  const stepX = innerW/Math.max(1, values.length-1);
+  const pts = values.map((v,i)=>[pad.l+i*stepX, pad.t+innerH-(v/maxV)*innerH]);
+  const path = pts.map((p,i)=>(i===0?'M':'L')+p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ');
+  const yTicks = [0, Math.round(maxV/2), maxV];
+  const grid = yTicks.map(t=>{
+    const y = pad.t+innerH-(t/maxV)*innerH;
+    return `<line x1="${pad.l}" y1="${y.toFixed(1)}" x2="${w-pad.r}" y2="${y.toFixed(1)}" stroke="var(--line)" stroke-width="1"/><text x="${pad.l-5}" y="${(y+3).toFixed(1)}" font-size="9" text-anchor="end" fill="var(--ink-dim)">${t}</text>`;
+  }).join('');
+  const dots = pts.map((p,i)=>`<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="2.3" fill="${color}"><title>${dates[i]}: ${values[i]}</title></circle>`).join('');
+  return `<svg viewBox="0 0 ${w} ${h}" style="width:100%;height:auto;display:block;">
+    ${grid}
+    <path d="${path}" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    ${dots}
+    <text x="${pad.l}" y="${h-4}" font-size="9" fill="var(--ink-dim)">${(dates[0]||'').slice(5)}</text>
+    <text x="${w-pad.r}" y="${h-4}" font-size="9" text-anchor="end" fill="var(--ink-dim)">${(dates[dates.length-1]||'').slice(5)}</text>
+  </svg>`;
+}
+function hbarChart(items){
+  const max = Math.max(1, ...items.map(i=>i.value));
+  return items.map(i=>`
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:9px;">
+      <div style="width:110px;flex:none;font-size:12px;color:var(--ink-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${i.label}</div>
+      <div style="flex:1;background:var(--surface-2);border-radius:6px;height:16px;overflow:hidden;"><div style="width:${(i.value/max*100).toFixed(1)}%;background:var(--accent-2);height:100%;"></div></div>
+      <div style="width:32px;flex:none;text-align:right;font-size:12px;font-weight:700;font-variant-numeric:tabular-nums;">${i.value}</div>
+    </div>`).join("");
+}
+
+function statsView(){
+  const days=[]; for(let i=29;i>=0;i--){ const d=new Date(); d.setDate(d.getDate()-i); days.push(d.toISOString().slice(0,10)); }
+  const byDate={}; DAILY_STATS.forEach(d=>byDate[d.id]=d);
+  const pageViews = days.map(d=>(byDate[d]?.page_views)||0);
+  const uniques = days.map(d=>(byDate[d]?.visitor_ids?.length)||0);
+
+  const today = todayStr();
+  const todayDoc = byDate[today] || {};
+  const thisMonth = today.slice(0,7);
+  const monthDocs = DAILY_STATS.filter(d=>d.id.startsWith(thisMonth));
+  const monthUniqueSet = new Set();
+  monthDocs.forEach(d=>(d.visitor_ids||[]).forEach(v=>monthUniqueSet.add(v)));
+  const sum = f => monthDocs.reduce((s,d)=>s+(d[f]||0),0);
+
+  const byMonth = {};
+  DAILY_STATS.forEach(d=>{
+    const m=d.id.slice(0,7);
+    byMonth[m]=byMonth[m]||{page_views:0,visitor_ids:new Set(),xhs:0,bot_blocked:0};
+    byMonth[m].page_views += d.page_views||0;
+    (d.visitor_ids||[]).forEach(v=>byMonth[m].visitor_ids.add(v));
+    byMonth[m].xhs += d.xhs||0;
+    byMonth[m].bot_blocked += d.bot_blocked||0;
+  });
+  const monthRows = Object.keys(byMonth).sort().reverse().map(m=>({month:m, unique:byMonth[m].visitor_ids.size, page_views:byMonth[m].page_views, xhs:byMonth[m].xhs, bot:byMonth[m].bot_blocked}));
+
+  const venueRank = VENUES.map(v=>({label:v.name_zh, value:(VENUE_VIEWS.find(x=>x.id===v.id)?.total)||0})).sort((a,b)=>b.value-a.value).slice(0,8);
+
+  return `<div class="admin-body">
+    <div class="section-title" style="padding:0 0 8px;">오늘</div>
+    <div class="stat-grid">
+      <div class="stat-tile"><div class="v">${todayDoc.visitor_ids?.length||0}</div><div class="k">순 방문자</div></div>
+      <div class="stat-tile"><div class="v">${todayDoc.page_views||0}</div><div class="k">페이지뷰</div></div>
+      <div class="stat-tile"><div class="v">${todayDoc.bot_blocked||0}</div><div class="k">제외된 봇</div></div>
+    </div>
+
+    <div class="section-title" style="padding:20px 0 8px;">최근 30일 추이 · 페이지뷰</div>
+    <div class="form-card">${lineChartSVG(days, pageViews, "var(--accent)")}</div>
+    <div class="section-title" style="padding:20px 0 8px;">최근 30일 추이 · 순 방문자</div>
+    <div class="form-card">${lineChartSVG(days, uniques, "var(--accent-2)")}</div>
+
+    <div class="section-title" style="padding:20px 0 8px;">이번 달(${thisMonth}) 요약</div>
+    <div class="stat-grid">
+      <div class="stat-tile"><div class="v">${monthUniqueSet.size}</div><div class="k">순 방문자</div></div>
+      <div class="stat-tile"><div class="v">${sum('page_views')}</div><div class="k">페이지뷰</div></div>
+      <div class="stat-tile"><div class="v">${sum('xhs')}</div><div class="k">샤오홍슈 유입</div></div>
+      <div class="stat-tile"><div class="v">${sum('lang_zh')}</div><div class="k">중국어 접속</div></div>
+    </div>
+
+    <div class="section-title" style="padding:20px 0 8px;">월별 요약 표</div>
+    <div class="table-wrap"><table class="stats-table">
+      <thead><tr><th>월</th><th>순방문자</th><th>페이지뷰</th><th>샤오홍슈 유입</th><th>제외된 봇</th></tr></thead>
+      <tbody>${monthRows.map(r=>`<tr><td>${r.month}</td><td>${r.unique}</td><td>${r.page_views}</td><td>${r.xhs}</td><td>${r.bot}</td></tr>`).join("") || `<tr><td colspan="5" style="text-align:center;color:var(--ink-dim);">데이터가 아직 없습니다</td></tr>`}</tbody>
+    </table></div>
+
+    <div class="section-title" style="padding:20px 0 8px;">업소별 조회수 순위</div>
+    <div class="form-card">${venueRank.some(v=>v.value>0) ? hbarChart(venueRank) : `<div style="color:var(--ink-dim);font-size:13px;">아직 조회 기록이 없습니다. 공개 사이트에서 업소 상세를 눌러보면 여기에 쌓입니다.</div>`}</div>
+
+    <div class="section-title" style="padding:20px 0 8px;">배너 성과</div>
+    <div class="admin-list">
+      ${BANNERS.map(b=>{
+        const s = BANNER_STATS.find(x=>x.id===b.id) || {impressions:0,clicks:0};
+        const ctr = s.impressions ? (s.clicks/s.impressions*100).toFixed(1) : '0.0';
+        return `<div class="admin-row">
+          <div class="main"><div class="t1">${b.advertiser_name}</div><div class="t2">노출 ${s.impressions||0} · 클릭 ${s.clicks||0} · CTR ${ctr}%</div></div>
+          <div class="acts"><a class="btn ghost small" href="#/admin/banners/report/${b.id}">리포트 보기</a></div>
+        </div>`;
+      }).join("") || `<div class="empty">등록된 배너가 없습니다.</div>`}
+    </div>
+  </div>`;
+}
+
+function bannerReportView(b){
+  if(!b) return `<div class="admin-body"><div class="empty">배너를 찾을 수 없습니다.</div></div>`;
+  const s = BANNER_STATS.find(x=>x.id===b.id) || {impressions:0,clicks:0};
+  const ctr = s.impressions ? (s.clicks/s.impressions*100).toFixed(2) : '0.00';
+  return `<div class="admin-body">
+    <div class="row-between"><h2 style="margin:0;font-size:16px;">광고주 리포트</h2><a class="btn ghost small" href="#/admin/banners">← 목록으로</a></div>
+    <p style="font-size:12.5px;color:var(--ink-dim);margin-top:-6px;">이 화면을 그대로 캡처해서 광고주에게 보내주세요.</p>
+    <div class="report-card">
+      <div class="report-title">${b.advertiser_name}</div>
+      <div class="report-sub">${(POSITIONS.find(p=>p.id===b.position)||{}).label||b.position} · ${b.start_date||'-'} ~ ${b.end_date||'-'}</div>
+      <div class="report-stats">
+        <div><div class="v">${s.impressions||0}</div><div class="k">노출수</div></div>
+        <div><div class="v">${s.clicks||0}</div><div class="k">클릭수</div></div>
+        <div><div class="v">${ctr}%</div><div class="k">CTR</div></div>
+      </div>
+      <div class="report-footer">江南夜生活指南 · ${todayStr()} 기준</div>
+    </div>
+  </div>`;
+}
+
 function renderAdmin(p){
   if(p[0]==='login'){ adminLogin(); return; }
   if(!isAdminLoggedIn()){ nav("admin/login"); return; }
@@ -844,9 +1087,11 @@ function renderAdmin(p){
   } else if(section==='banners'){
     if(p[1]==='new') body = bannerFormView(null);
     else if(p[1]==='edit') body = bannerFormView(BANNERS.find(b=>String(b.id)===String(p[2])));
+    else if(p[1]==='report') body = bannerReportView(BANNERS.find(b=>String(b.id)===String(p[2])));
     else body = bannerListView();
   } else if(section==='settings'){ body = settingsView(); }
   else if(section==='inquiries'){ body = inquiriesView(); }
+  else if(section==='stats'){ body = statsView(); }
   else { body = venueListView(); }
   app.innerHTML = adminShell(section) + body;
 }

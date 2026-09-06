@@ -1,0 +1,496 @@
+<title>강남 나이트라이프 가이드 설계도</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Noto+Sans+KR:wght@400;500;700;900&family=Noto+Sans+SC:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+:root{
+  --bg:#faf9fc;
+  --surface:#ffffff;
+  --surface-2:#f1eef8;
+  --ink:#201f2b;
+  --ink-dim:#6b6880;
+  --accent:#d6316f;
+  --accent-ink:#ffffff;
+  --accent-2:#c97a12;
+  --line:#e3e0ee;
+  --good:#1f9d5c;
+  --good-bg:#e6f7ee;
+  --warn:#a86a00;
+  --warn-bg:#fbf0dc;
+  --radius:14px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#121017;
+    --surface:#1c1a24;
+    --surface-2:#242230;
+    --ink:#ece9f5;
+    --ink-dim:#9d99b3;
+    --accent:#ff5da2;
+    --accent-ink:#1a0812;
+    --accent-2:#ffb84d;
+    --line:#33313f;
+    --good:#57d38c;
+    --good-bg:#173226;
+    --warn:#ffb84d;
+    --warn-bg:#332608;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#121017;
+  --surface:#1c1a24;
+  --surface-2:#242230;
+  --ink:#ece9f5;
+  --ink-dim:#9d99b3;
+  --accent:#ff5da2;
+  --accent-ink:#1a0812;
+  --accent-2:#ffb84d;
+  --line:#33313f;
+  --good:#57d38c;
+  --good-bg:#173226;
+  --warn:#ffb84d;
+  --warn-bg:#332608;
+}
+
+*{box-sizing:border-box;}
+body{
+  background:var(--bg);
+  color:var(--ink);
+  font-family:'Noto Sans KR','Noto Sans SC',sans-serif;
+  line-height:1.65;
+}
+.wrap{
+  max-width:920px;
+  margin:0 auto;
+  padding:48px 20px 100px;
+}
+.eyebrow{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  font-family:'JetBrains Mono',monospace;
+  font-size:12.5px;
+  letter-spacing:.06em;
+  color:var(--accent);
+  background:color-mix(in srgb, var(--accent) 12%, transparent);
+  border:1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+  padding:5px 12px;
+  border-radius:999px;
+  margin-bottom:18px;
+}
+h1{
+  font-family:'Black Han Sans','Noto Sans KR',sans-serif;
+  font-weight:400;
+  font-size:clamp(30px,5vw,44px);
+  letter-spacing:.01em;
+  line-height:1.25;
+  text-wrap:balance;
+  margin:0 0 14px;
+}
+h1 span{color:var(--accent);}
+.lede{
+  font-size:16.5px;
+  color:var(--ink-dim);
+  max-width:64ch;
+  margin:0 0 8px;
+}
+.lede strong{color:var(--ink);font-weight:700;}
+
+h2{
+  font-family:'Black Han Sans','Noto Sans KR',sans-serif;
+  font-weight:400;
+  font-size:26px;
+  margin:64px 0 6px;
+  letter-spacing:.01em;
+}
+.section-sub{
+  color:var(--ink-dim);
+  font-size:14.5px;
+  margin:0 0 28px;
+  max-width:60ch;
+}
+.step-num{
+  font-family:'JetBrains Mono',monospace;
+  color:var(--accent-2);
+  font-size:15px;
+  margin-right:8px;
+}
+
+/* sitemap */
+.sitemap{
+  display:grid;
+  gap:14px;
+  margin-top:8px;
+}
+.sitemap-row{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:12px;
+}
+.node{
+  background:var(--surface);
+  border:1.5px solid var(--line);
+  border-radius:var(--radius);
+  padding:14px 16px;
+  font-size:14px;
+  position:relative;
+}
+.node b{display:block;font-size:14.5px;margin-bottom:3px;}
+.node small{color:var(--ink-dim);font-size:12.5px;}
+.node.entry{
+  border-color:color-mix(in srgb, var(--accent) 55%, var(--line));
+  background:color-mix(in srgb, var(--accent) 8%, var(--surface));
+}
+.node.exclusive{
+  border-style:dashed;
+  border-color:var(--warn);
+}
+.arrow-row{
+  display:flex;
+  justify-content:center;
+  color:var(--ink-dim);
+  font-family:'JetBrains Mono',monospace;
+  font-size:13px;
+  padding:2px 0;
+}
+
+/* screen table */
+.screen-table{width:100%;border-collapse:collapse;font-size:14.5px;}
+.table-scroll{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);}
+.screen-table th{
+  text-align:left;
+  font-family:'JetBrains Mono',monospace;
+  font-weight:500;
+  font-size:12px;
+  letter-spacing:.04em;
+  color:var(--ink-dim);
+  background:var(--surface-2);
+  padding:12px 16px;
+  border-bottom:1px solid var(--line);
+  white-space:nowrap;
+}
+.screen-table td{
+  padding:14px 16px;
+  border-bottom:1px solid var(--line);
+  vertical-align:top;
+}
+.screen-table tr:last-child td{border-bottom:none;}
+.screen-table td.name{font-weight:700;white-space:nowrap;}
+.pill{
+  display:inline-block;
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px;
+  padding:2px 8px;
+  border-radius:6px;
+  background:var(--surface-2);
+  color:var(--ink-dim);
+  margin-top:4px;
+}
+.pill.zh{background:var(--good-bg);color:var(--good);}
+.pill.ko{background:var(--warn-bg);color:var(--warn);}
+
+/* schema cards */
+.schema-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(360px,1fr));
+  gap:16px;
+  margin-top:8px;
+}
+.schema-card{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  overflow:hidden;
+}
+.schema-head{
+  padding:14px 18px;
+  border-bottom:1px solid var(--line);
+  background:var(--surface-2);
+  display:flex;
+  align-items:baseline;
+  justify-content:space-between;
+  gap:10px;
+}
+.schema-head .tname{
+  font-family:'JetBrains Mono',monospace;
+  font-weight:700;
+  font-size:14.5px;
+  color:var(--accent);
+}
+.schema-head .tdesc{font-size:13px;color:var(--ink-dim);text-align:right;}
+.field-list{padding:6px 0;}
+.field{
+  display:grid;
+  grid-template-columns:1fr 1.3fr;
+  gap:10px;
+  padding:9px 18px;
+  font-size:13px;
+  border-bottom:1px solid var(--line);
+}
+.field:last-child{border-bottom:none;}
+.field .fname{font-family:'JetBrains Mono',monospace;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.field .fdesc{color:var(--ink-dim);}
+.field .fdesc em{color:var(--ink);font-style:normal;}
+.internal-tag{
+  font-family:'JetBrains Mono',monospace;
+  font-size:10.5px;
+  color:var(--ink-dim);
+  background:var(--surface-2);
+  padding:1px 6px;
+  border-radius:5px;
+  margin-left:6px;
+}
+
+.callout{
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:20px 22px;
+  margin:20px 0;
+  background:var(--surface);
+}
+.callout.policy{border-color:color-mix(in srgb, var(--warn) 45%, var(--line));background:var(--warn-bg);}
+.callout.policy .head{color:var(--warn);font-weight:700;font-size:14px;margin-bottom:6px;}
+.callout p{margin:0;font-size:14.5px;color:var(--ink);}
+
+.confirm-box{
+  margin-top:70px;
+  border-radius:18px;
+  padding:32px;
+  background:linear-gradient(155deg, color-mix(in srgb, var(--accent) 14%, var(--surface)), var(--surface));
+  border:1.5px solid color-mix(in srgb, var(--accent) 40%, var(--line));
+}
+.confirm-box h2{margin-top:0;color:var(--accent);}
+.confirm-box ul{margin:14px 0 0;padding-left:20px;font-size:14.5px;}
+.confirm-box li{margin-bottom:8px;}
+.confirm-box .next{
+  margin-top:20px;
+  font-size:14.5px;
+  color:var(--ink-dim);
+  border-top:1px dashed var(--line);
+  padding-top:16px;
+}
+.confirm-box .next b{color:var(--ink);}
+
+footer{
+  margin-top:60px;
+  padding-top:20px;
+  border-top:1px solid var(--line);
+  color:var(--ink-dim);
+  font-size:13px;
+}
+</style>
+
+<div class="wrap">
+
+  <span class="eyebrow">1 / 5 단계 · 화면 구조 &amp; 데이터 설계</span>
+  <h1>강남 나이트라이프 가이드<br><span>설계도</span> 먼저 확인해주세요</h1>
+  <p class="lede">코드를 만들기 전에, <strong>어떤 화면이 몇 개 생기고 각 화면에 어떤 정보가 저장되는지</strong> 먼저 정리했습니다. 여기서 이상한 점이나 빠진 항목을 말씀해주시면 수정한 뒤 2단계(실제 화면 만들기)로 넘어가겠습니다.</p>
+
+  <div class="callout policy">
+    <div class="head">⚠ 게재 범위 원칙 반영</div>
+    <p>업소 등록 화면의 "카테고리" 항목은 <em>클럽 · 칵테일바 · 라운지바 · 루프탑바 · 펍</em> 5개만 선택할 수 있게 만듭니다. 유흥주점은 목록 자체에 없어서 관리자가 실수로도 등록할 수 없습니다.</p>
+  </div>
+
+  <div class="callout policy">
+    <div class="head">⚠ 직접 관리 방식 (추가 요청 반영)</div>
+    <p>관리자 화면의 모든 등록·수정은 <em>버튼과 입력칸으로만</em> 진행됩니다. 배너 이미지도 <b>"파일 첨부" 버튼을 눌러 사진을 올리는 방식</b>이며, HTML이나 코드를 직접 입력하는 화면은 없습니다. 업소·글·배너 전부 동일합니다 — 사진은 첨부, 글자는 입력칸에 타이핑, 날짜는 달력에서 클릭.</p>
+  </div>
+
+  <h2><span class="step-num">A.</span>전체 화면 지도</h2>
+  <p class="section-sub">방문자용 5개 화면 + 관리자용 6개 화면, 총 11개 화면입니다.</p>
+
+  <div class="sitemap">
+    <div class="node entry">
+      <b>🔗 샤오홍슈 프로필 링크</b>
+      <small>유입 시작점 — 검색 유입 없음 가정</small>
+    </div>
+    <div class="arrow-row">↓</div>
+    <div class="sitemap-row">
+      <div class="node entry"><b>① 메인</b><small>업소 카드 목록 · 카테고리/지역 필터</small></div>
+    </div>
+    <div class="arrow-row">↓ 카드 클릭 　　　　　　↓ 하단 메뉴</div>
+    <div class="sitemap-row">
+      <div class="node"><b>② 업소 상세</b><small>영업정보·요금·택시버튼</small></div>
+      <div class="node"><b>③ 가이드 목록</b><small>이용 팁 글 목록</small></div>
+      <div class="node exclusive"><b>⑤ 광고 문의</b><small>한국어 전용 화면</small></div>
+    </div>
+    <div class="arrow-row">　　　　　　　　↓ 글 클릭</div>
+    <div class="sitemap-row">
+      <div class="node"><b>④ 가이드 상세</b><small>글 본문</small></div>
+    </div>
+  </div>
+
+  <div class="sitemap" style="margin-top:28px;">
+    <div class="sitemap-row">
+      <div class="node entry"><b>🔒 관리자 로그인</b><small>아이디/비밀번호, 계정 1개</small></div>
+    </div>
+    <div class="arrow-row">↓</div>
+    <div class="sitemap-row">
+      <div class="node"><b>⑥ 업소 관리</b><small>등록·수정·삭제·사진·순서·숨김</small></div>
+      <div class="node"><b>⑦ 가이드 관리</b><small>글 등록·수정·삭제</small></div>
+      <div class="node"><b>⑧ 배너 관리</b><small>자리·기간·이미지 등록</small></div>
+    </div>
+    <div class="sitemap-row">
+      <div class="node"><b>⑨ 문의함</b><small>광고 문의 확인·처리</small></div>
+      <div class="node"><b>⑩ 방문자 통계</b><small>추이 그래프 · 월별 요약</small></div>
+      <div class="node"><b>⑪ 광고주 리포트</b><small>배너 1개 성과 캡처용 화면</small></div>
+    </div>
+  </div>
+
+  <h2><span class="step-num">B.</span>화면별 상세</h2>
+  <p class="section-sub">각 화면에서 무엇을 보여주고, 어느 언어로 만드는지 정리했습니다.</p>
+
+  <div class="table-scroll">
+    <table class="screen-table">
+      <thead><tr><th>화면</th><th>보여줄 내용</th><th>언어</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="name">① 메인</td>
+          <td>업소 카드 목록(사진·이름·카테고리·지역). 상단 배너 1개, 목록 5·15번째 자리 광고, "추천" 고정 카드. 소개 문구·히어로 없이 목록이 바로 보임</td>
+          <td><span class="pill zh">zh-CN</span></td>
+        </tr>
+        <tr>
+          <td class="name">② 업소 상세</td>
+          <td>사진 갤러리, 영업시간·휴무, 입장료(남/여·요일별), 드레스코드, 여권 지참 여부, 평균예산, 중/한 주소, <b>택시 기사에게 보여주기 버튼</b>, 구글맵 링크, 위챗/인스타, 하단 배너</td>
+          <td><span class="pill zh">zh-CN</span></td>
+        </tr>
+        <tr>
+          <td class="name">③ 가이드 목록</td>
+          <td>이용 팁 글 카드 목록 (예: "여권이 필요한 이유", "드레스코드 안내")</td>
+          <td><span class="pill zh">zh-CN</span></td>
+        </tr>
+        <tr>
+          <td class="name">④ 가이드 상세</td>
+          <td>글 제목·본문·대표 이미지</td>
+          <td><span class="pill zh">zh-CN</span></td>
+        </tr>
+        <tr>
+          <td class="name">⑤ 광고 문의</td>
+          <td>업소명·담당자·연락처·희망 광고자리·문의내용 입력 폼</td>
+          <td><span class="pill ko">한국어만</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2><span class="step-num">C.</span>저장할 정보 (데이터베이스 표)</h2>
+  <p class="section-sub">Cloudflare D1에 만들 표 10개입니다. <span class="internal-tag">내부용</span> 표시가 붙은 것은 화면에 직접 보이지 않고, 통계 계산에만 쓰입니다.</p>
+
+  <div class="schema-grid">
+
+    <div class="schema-card">
+      <div class="schema-head"><span class="tname">venues</span><span class="tdesc">업소 정보</span></div>
+      <div class="field-list">
+        <div class="field"><span class="fname">name_zh / name_ko / name_en</span><span class="fdesc">업소명 3개 언어 병기</span></div>
+        <div class="field"><span class="fname">category</span><span class="fdesc">클럽/칵테일바/라운지바/루프탑바/펍 <em>중 1개만</em></span></div>
+        <div class="field"><span class="fname">district</span><span class="fdesc">강남역/신논현/압구정로데오/청담</span></div>
+        <div class="field"><span class="fname">business_hours</span><span class="fdesc">영업시간, 요일별 휴무</span></div>
+        <div class="field"><span class="fname">fee_male / fee_female</span><span class="fdesc">입장료, 요일별 차등 내용 포함</span></div>
+        <div class="field"><span class="fname">dress_code</span><span class="fdesc">예: 슬리퍼·반바지 금지</span></div>
+        <div class="field"><span class="fname">passport_required</span><span class="fdesc">여권 지참 필수 여부(예/아니오) + 설명</span></div>
+        <div class="field"><span class="fname">avg_budget</span><span class="fdesc">1인 평균 예산</span></div>
+        <div class="field"><span class="fname">address_zh / address_ko</span><span class="fdesc">중국어·한국어 주소 (택시 버튼용)</span></div>
+        <div class="field"><span class="fname">google_maps_url</span><span class="fdesc">구글맵 링크</span></div>
+        <div class="field"><span class="fname">wechat_id / instagram</span><span class="fdesc">선택 입력</span></div>
+        <div class="field"><span class="fname">status / sort_order</span><span class="fdesc">공개·숨김 / 노출 순서</span></div>
+      </div>
+    </div>
+
+    <div class="schema-card">
+      <div class="schema-head"><span class="tname">venue_photos</span><span class="tdesc">업소 사진</span></div>
+      <div class="field-list">
+        <div class="field"><span class="fname">venue_id</span><span class="fdesc">어느 업소 사진인지</span></div>
+        <div class="field"><span class="fname">image_url</span><span class="fdesc">Cloudflare R2에 저장된 사진 주소</span></div>
+        <div class="field"><span class="fname">sort_order</span><span class="fdesc">3~8장, 노출 순서</span></div>
+      </div>
+    </div>
+
+    <div class="schema-card">
+      <div class="schema-head"><span class="tname">guides</span><span class="tdesc">가이드 글</span></div>
+      <div class="field-list">
+        <div class="field"><span class="fname">title / content</span><span class="fdesc">제목·본문</span></div>
+        <div class="field"><span class="fname">cover_image</span><span class="fdesc">목록용 대표 이미지</span></div>
+        <div class="field"><span class="fname">status</span><span class="fdesc">공개·임시저장</span></div>
+      </div>
+    </div>
+
+    <div class="schema-card">
+      <div class="schema-head"><span class="tname">banners</span><span class="tdesc">배너(광고)</span></div>
+      <div class="field-list">
+        <div class="field"><span class="fname">position</span><span class="fdesc">상단/목록삽입/상세하단/상단고정</span></div>
+        <div class="field"><span class="fname">image_url / link_url</span><span class="fdesc">관리자가 "파일 첨부"로 올린 이미지, 클릭 시 이동 주소</span></div>
+        <div class="field"><span class="fname">advertiser_name</span><span class="fdesc">광고주(업체)명</span></div>
+        <div class="field"><span class="fname">linked_venue_id</span><span class="fdesc">"상단고정"일 때 어느 업소 카드인지</span></div>
+        <div class="field"><span class="fname">start_date / end_date</span><span class="fdesc">종료일 지나면 자동 노출 중단</span></div>
+      </div>
+    </div>
+
+    <div class="schema-card">
+      <div class="schema-head"><span class="tname">inquiries</span><span class="tdesc">광고 문의</span></div>
+      <div class="field-list">
+        <div class="field"><span class="fname">venue_name / contact_name / phone</span><span class="fdesc">문의 업체 정보</span></div>
+        <div class="field"><span class="fname">desired_position / message</span><span class="fdesc">희망 자리, 문의 내용</span></div>
+        <div class="field"><span class="fname">status</span><span class="fdesc">신규/처리중/완료</span></div>
+      </div>
+    </div>
+
+    <div class="schema-card">
+      <div class="schema-head"><span class="tname">admin_account</span><span class="tdesc">관리자 계정</span></div>
+      <div class="field-list">
+        <div class="field"><span class="fname">username / password_hash</span><span class="fdesc">1개 계정만 존재</span></div>
+      </div>
+    </div>
+
+    <div class="schema-card">
+      <div class="schema-head"><span class="tname">visit_events<span class="internal-tag">내부용</span></span><span class="tdesc">원본 방문 기록</span></div>
+      <div class="field-list">
+        <div class="field"><span class="fname">visitor_id</span><span class="fdesc">쿠키 기반 익명 ID (개인정보 아님)</span></div>
+        <div class="field"><span class="fname">event_type</span><span class="fdesc">페이지뷰 / 배너노출 / 배너클릭</span></div>
+        <div class="field"><span class="fname">target_path / target_id</span><span class="fdesc">본 페이지 또는 배너</span></div>
+        <div class="field"><span class="fname">referrer</span><span class="fdesc">샤오홍슈 유입인지 직접 접속인지</span></div>
+        <div class="field"><span class="fname">country / language</span><span class="fdesc">접속 국가·언어</span></div>
+        <div class="field"><span class="fname">is_bot</span><span class="fdesc">봇으로 판정되면 통계에서 자동 제외</span></div>
+      </div>
+    </div>
+
+    <div class="schema-card">
+      <div class="schema-head"><span class="tname">daily_stats<span class="internal-tag">집계</span></span><span class="tdesc">일별 통계 요약</span></div>
+      <div class="field-list">
+        <div class="field"><span class="fname">date</span><span class="fdesc">날짜</span></div>
+        <div class="field"><span class="fname">unique_visitors / page_views</span><span class="fdesc">순 방문자 / 페이지뷰</span></div>
+        <div class="field"><span class="fname">xhs_referral_count</span><span class="fdesc">샤오홍슈 유입 수</span></div>
+        <div class="field"><span class="fname">cn_visitor_count</span><span class="fdesc">중국 접속 비중 확인용</span></div>
+      </div>
+    </div>
+
+    <div class="schema-card">
+      <div class="schema-head"><span class="tname">venue_view_stats<span class="internal-tag">집계</span></span><span class="tdesc">업소별 조회수</span></div>
+      <div class="field-list">
+        <div class="field"><span class="fname">venue_id / date</span><span class="fdesc">어느 업소, 어느 날짜</span></div>
+        <div class="field"><span class="fname">view_count</span><span class="fdesc">상세페이지 조회수 (인기순위·단가 협상 근거)</span></div>
+      </div>
+    </div>
+
+    <div class="schema-card">
+      <div class="schema-head"><span class="tname">banner_stats<span class="internal-tag">집계</span></span><span class="tdesc">배너별 성과</span></div>
+      <div class="field-list">
+        <div class="field"><span class="fname">banner_id / date</span><span class="fdesc">어느 배너, 어느 날짜</span></div>
+        <div class="field"><span class="fname">impressions / clicks</span><span class="fdesc">노출수 / 클릭수 → CTR 계산</span></div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="confirm-box">
+    <h2>이대로 진행해도 될까요?</h2>
+    <p style="color:var(--ink-dim);margin:0;">아래 체크리스트를 보시고 문제없으면 <b>"2단계 진행해줘"</b>라고 말씀해주세요. 그러면 이 설계를 바탕으로 실제 화면(메인·업소상세·가이드·광고문의)을 가짜 데이터로 채워서 브라우저에서 볼 수 있게 만들겠습니다.</p>
+    <ul>
+      <li>화면 11개(방문자 5 + 관리자 6) 구성이 맞는지</li>
+      <li>업소 정보 항목에 빠진 게 없는지 (예: 추가로 필요한 정보가 있다면 알려주세요)</li>
+      <li>카테고리 5종(클럽/칵테일바/라운지바/루프탑바/펍) 외 추가할 분류가 있는지</li>
+      <li>광고 자리 4종(상단배너/목록삽입/상세하단/상단고정) 구성이 맞는지</li>
+    </ul>
+    <div class="next">다음 단계: <b>2단계 — 프론트 화면(가짜 데이터)</b> → 3단계 관리자 화면 → 4단계 방문자 통계 → 5단계 Cloudflare 배포 순으로 진행하며, 매 단계 확인을 받고 넘어갑니다.</div>
+  </div>
+
+  <footer>강남 나이트라이프 가이드 · 1단계 설계 문서</footer>
+</div>

@@ -1,0 +1,853 @@
+<title>江南夜生活指南 관리자 프로토타입</title>
+<style>
+:root{
+  --bg:#faf8fb; --surface:#ffffff; --surface-2:#f2eef7;
+  --ink:#1e1c27; --ink-dim:#6c6880; --line:#e6e2ee;
+  --accent:#d6316f; --accent-strong:#b8215b; --accent-2:#c97a12;
+  --good:#1f9d5c; --good-bg:#e6f7ee; --warn:#a86a00; --warn-bg:#fbf0dc;
+  --danger:#c23b3b; --danger-bg:#fbe8e8;
+  --shadow:0 10px 30px -14px rgba(30,20,40,.25);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#121017; --surface:#1c1a24; --surface-2:#242230;
+    --ink:#efeaf7; --ink-dim:#a29db8; --line:#332f40;
+    --accent:#ff5da2; --accent-strong:#ff85b8; --accent-2:#ffb84d;
+    --good:#57d38c; --good-bg:#173021; --warn:#ffb84d; --warn-bg:#332608;
+    --danger:#ff6b6b; --danger-bg:#3a1616;
+    --shadow:0 10px 30px -14px rgba(0,0,0,.6);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#121017; --surface:#1c1a24; --surface-2:#242230;
+  --ink:#efeaf7; --ink-dim:#a29db8; --line:#332f40;
+  --accent:#ff5da2; --accent-strong:#ff85b8; --accent-2:#ffb84d;
+  --good:#57d38c; --good-bg:#173021; --warn:#ffb84d; --warn-bg:#332608;
+  --danger:#ff6b6b; --danger-bg:#3a1616;
+  --shadow:0 10px 30px -14px rgba(0,0,0,.6);
+}
+*{box-sizing:border-box;}
+body{background:var(--bg);color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Helvetica Neue","Microsoft YaHei","Noto Sans SC","Segoe UI",sans-serif;
+  line-height:1.6;}
+a{color:inherit;text-decoration:none;}
+button{font-family:inherit;cursor:pointer;}
+.app-shell{max-width:480px;margin:0 auto;min-height:100vh;background:var(--bg);position:relative;padding-bottom:26px;}
+@media (min-width:860px){ .app-shell{max-width:960px;} }
+
+/* ---- shared bits reused from public site ---- */
+.topbar{position:sticky;top:0;z-index:20;background:var(--bg);border-bottom:1px solid var(--line);padding:10px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.brand{display:flex;flex-direction:column;line-height:1.25;cursor:pointer;}
+.brand .t{font-size:16px;font-weight:800;}
+.brand .s{font-size:11px;color:var(--ink-dim);}
+.topnav{display:flex;gap:4px;font-size:12.5px;}
+.topnav a{padding:7px 10px;border-radius:8px;color:var(--ink-dim);font-weight:600;white-space:nowrap;}
+.topnav a.active,.topnav a:hover{background:var(--surface-2);color:var(--ink);}
+.banner-slot{display:flex;align-items:center;justify-content:center;text-align:center;border:1.5px dashed var(--line);border-radius:12px;background:var(--surface-2);color:var(--ink-dim);font-size:12.5px;padding:14px;min-height:64px;margin:12px 16px 0;gap:6px;flex-direction:column;}
+.banner-slot.filled{border-style:solid;border-color:var(--line);background:var(--surface);padding:0;overflow:hidden;min-height:0;}
+.banner-slot.filled a{display:block;padding:14px;}
+.banner-slot .adv{font-weight:800;font-size:14px;}
+.banner-slot .cta{font-size:11.5px;color:var(--accent);}
+.banner-slot.top{aspect-ratio:4/1;}
+.banner-slot.detail-bottom{aspect-ratio:3.6/1;}
+.banner-img{width:100%;height:100%;object-fit:cover;display:block;}
+.filter-row{display:flex;gap:8px;overflow-x:auto;padding:14px 16px 4px;scrollbar-width:none;}
+.filter-row::-webkit-scrollbar{display:none;}
+.chip{flex:none;padding:7px 14px;border-radius:999px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink-dim);font-size:13px;font-weight:600;white-space:nowrap;}
+.chip.on{background:var(--accent);border-color:var(--accent);color:#fff;}
+.filter-label{font-size:11px;color:var(--ink-dim);padding:10px 16px 0;font-weight:700;}
+.section-title{font-size:13px;font-weight:800;color:var(--ink-dim);padding:20px 16px 8px;display:flex;align-items:center;gap:6px;}
+.badge-pin{background:var(--accent);color:#fff;font-size:10px;padding:2px 7px;border-radius:6px;}
+.venue-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:0 16px;}
+@media (min-width:860px){ .venue-grid{grid-template-columns:repeat(3,1fr);} }
+.venue-card{background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden;cursor:pointer;display:flex;flex-direction:column;box-shadow:var(--shadow);position:relative;}
+.venue-card .thumb{aspect-ratio:4/3;display:flex;align-items:center;justify-content:center;font-size:34px;color:#fff;position:relative;overflow:hidden;}
+.venue-card .thumb img{width:100%;height:100%;object-fit:cover;}
+.venue-card .pin-tag{position:absolute;top:8px;left:8px;background:rgba(0,0,0,.55);color:#ffd9e8;font-size:10.5px;font-weight:800;padding:3px 8px;border-radius:6px;}
+.venue-card .body{padding:10px 11px 12px;display:flex;flex-direction:column;gap:5px;}
+.venue-card .name-zh{font-size:14.5px;font-weight:800;}
+.venue-card .name-sub{font-size:11px;color:var(--ink-dim);}
+.tag-row{display:flex;flex-wrap:wrap;gap:5px;}
+.tag{font-size:10.5px;padding:2px 7px;border-radius:6px;background:var(--surface-2);color:var(--ink-dim);font-weight:600;}
+.tag.passport{background:var(--warn-bg);color:var(--warn);}
+.fee-line{font-size:12px;font-weight:700;font-variant-numeric:tabular-nums;}
+.ad-card{border:1.5px dashed var(--line);border-radius:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:4px;padding:14px;color:var(--ink-dim);font-size:12px;min-height:150px;}
+.ad-card b{color:var(--accent);font-size:13px;}
+.gallery{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;}
+.gallery::-webkit-scrollbar{display:none;}
+.gallery .slide{flex:none;width:100%;scroll-snap-align:start;aspect-ratio:4/3;display:flex;align-items:center;justify-content:center;font-size:52px;color:#fff;overflow:hidden;}
+.gallery .slide img{width:100%;height:100%;object-fit:cover;}
+.detail-body{padding:16px;}
+.detail-title-row{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;}
+.detail-title-row h1{font-size:20px;margin:0 0 2px;font-weight:900;}
+.detail-title-row .sub{font-size:12.5px;color:var(--ink-dim);margin:0;}
+.back-btn{border:none;background:var(--surface-2);color:var(--ink);width:34px;height:34px;border-radius:10px;font-size:16px;flex:none;}
+.taxi-btn{margin-top:14px;width:100%;padding:15px;border-radius:14px;border:none;background:linear-gradient(135deg,var(--accent),var(--accent-strong));color:#fff;font-size:15px;font-weight:800;display:flex;align-items:center;justify-content:center;gap:8px;}
+.info-card{background:var(--surface);border:1px solid var(--line);border-radius:14px;margin-top:16px;overflow:hidden;}
+.info-row{display:grid;grid-template-columns:84px 1fr;gap:10px;padding:12px 14px;border-bottom:1px solid var(--line);font-size:13.5px;}
+.info-row:last-child{border-bottom:none;}
+.info-row .k{color:var(--ink-dim);font-weight:700;font-size:12px;}
+.passport-yes{color:var(--warn);font-weight:800;}
+.passport-no{color:var(--good);font-weight:800;}
+.addr-card{background:var(--surface);border:1px solid var(--line);border-radius:14px;margin-top:16px;padding:14px;}
+.addr-card .lang-line{font-size:13px;margin-bottom:6px;}
+.addr-card .lang-line b{display:inline-block;font-size:10.5px;color:var(--ink-dim);background:var(--surface-2);padding:1px 6px;border-radius:5px;margin-right:6px;font-weight:800;}
+.addr-actions{display:flex;gap:8px;margin-top:10px;}
+.btn-outline{flex:1;text-align:center;padding:10px;border-radius:10px;border:1.5px solid var(--line);background:var(--surface);font-size:12.5px;font-weight:700;}
+.social-row{display:flex;gap:8px;margin-top:14px;}
+.social-pill{font-size:12.5px;background:var(--surface-2);padding:8px 12px;border-radius:10px;font-weight:700;}
+.taxi-overlay{position:fixed;inset:0;background:#fff;color:#111;z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 20px;text-align:center;}
+.taxi-overlay .hint{font-size:13px;color:#666;margin-bottom:18px;font-weight:700;}
+.taxi-overlay .venue-name{font-size:22px;font-weight:900;margin-bottom:14px;}
+.taxi-overlay .addr{font-size:clamp(26px,8vw,42px);font-weight:900;line-height:1.35;}
+.taxi-overlay .close-x{position:absolute;top:18px;right:18px;width:42px;height:42px;border-radius:50%;border:none;background:#f0f0f0;color:#111;font-size:20px;}
+.guide-card{display:flex;gap:12px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:10px;margin:0 16px 12px;cursor:pointer;}
+.guide-card .thumb{flex:none;width:76px;height:76px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:26px;color:#fff;overflow:hidden;}
+.guide-card .thumb img{width:100%;height:100%;object-fit:cover;}
+.guide-card .g-title{font-weight:800;font-size:14.5px;margin-bottom:3px;}
+.guide-card .g-excerpt{font-size:12px;color:var(--ink-dim);}
+.guide-content{padding:18px 16px 30px;font-size:15px;}
+.guide-content p{margin:0 0 14px;}
+.contact-wrap{padding:18px 16px 40px;}
+.contact-wrap h1{font-size:20px;margin:0 0 4px;}
+.contact-wrap .note{font-size:13px;color:var(--ink-dim);margin-bottom:18px;}
+.field{margin-bottom:14px;}
+.field label{display:block;font-size:13px;font-weight:700;margin-bottom:6px;}
+.field input,.field select,.field textarea{width:100%;padding:11px 12px;border-radius:10px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);font-size:14px;font-family:inherit;}
+.field textarea{min-height:90px;resize:vertical;}
+.field .hint{font-size:11.5px;color:var(--ink-dim);margin-top:4px;}
+.submit-btn{width:100%;padding:14px;border:none;border-radius:12px;background:var(--accent);color:#fff;font-weight:800;font-size:15px;}
+.success-box{background:var(--good-bg);color:var(--good);border-radius:12px;padding:16px;font-weight:700;font-size:14px;margin-bottom:16px;}
+footer.site-footer{padding:26px 16px 10px;color:var(--ink-dim);font-size:11.5px;text-align:center;border-top:1px solid var(--line);margin-top:24px;}
+.empty{padding:40px 16px;text-align:center;color:var(--ink-dim);font-size:13.5px;}
+
+/* ---- admin-only ---- */
+.admin-tabs{display:flex;gap:4px;overflow-x:auto;padding:10px 16px;border-bottom:1px solid var(--line);background:var(--surface);scrollbar-width:none;}
+.admin-tabs::-webkit-scrollbar{display:none;}
+.admin-tabs a{flex:none;padding:8px 12px;border-radius:9px;font-size:12.5px;font-weight:700;color:var(--ink-dim);}
+.admin-tabs a.active{background:var(--accent);color:#fff;}
+.admin-topbar{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;}
+.admin-topbar .title{font-weight:900;font-size:15px;}
+.admin-topbar .links{display:flex;gap:8px;font-size:12px;}
+.admin-topbar .links a{color:var(--ink-dim);font-weight:700;}
+.admin-body{padding:16px;}
+.row-between{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:10px;}
+.btn{padding:10px 16px;border:none;border-radius:10px;background:var(--accent);color:#fff;font-weight:800;font-size:13.5px;}
+.btn.ghost{background:var(--surface-2);color:var(--ink);}
+.btn.danger{background:var(--danger-bg);color:var(--danger);}
+.btn.small{padding:6px 10px;font-size:12px;}
+.admin-list{display:flex;flex-direction:column;gap:10px;}
+.admin-row{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px;display:flex;gap:12px;align-items:center;}
+.admin-row .thumb-sm{flex:none;width:52px;height:52px;border-radius:10px;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:20px;color:#fff;}
+.admin-row .thumb-sm img{width:100%;height:100%;object-fit:cover;}
+.admin-row .main{flex:1;min-width:0;}
+.admin-row .main .t1{font-weight:800;font-size:14px;}
+.admin-row .main .t2{font-size:12px;color:var(--ink-dim);margin-top:2px;}
+.admin-row .acts{display:flex;gap:6px;flex:none;flex-wrap:wrap;}
+.status-pill{font-size:10.5px;font-weight:800;padding:3px 8px;border-radius:6px;}
+.status-pill.live{background:var(--good-bg);color:var(--good);}
+.status-pill.hidden{background:var(--surface-2);color:var(--ink-dim);}
+.status-pill.warn{background:var(--warn-bg);color:var(--warn);}
+.status-pill.expired{background:var(--danger-bg);color:var(--danger);}
+.form-card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.form-grid .span2{grid-column:1/-1;}
+@media (max-width:520px){ .form-grid{grid-template-columns:1fr;} }
+.checkline{display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:700;padding:10px 0;}
+.photo-grid{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;}
+.photo-thumb{position:relative;width:72px;height:72px;border-radius:10px;overflow:hidden;border:1px solid var(--line);}
+.photo-thumb img{width:100%;height:100%;object-fit:cover;}
+.photo-thumb .rm{position:absolute;top:2px;right:2px;width:20px;height:20px;border-radius:50%;border:none;background:rgba(0,0,0,.65);color:#fff;font-size:12px;line-height:1;}
+.upload-btn{display:inline-block;padding:9px 14px;border-radius:9px;border:1.5px dashed var(--line);font-size:12.5px;font-weight:700;color:var(--ink-dim);cursor:pointer;margin-top:8px;}
+.login-wrap{max-width:340px;margin:60px auto;padding:0 20px;}
+.login-wrap h1{font-size:20px;text-align:center;margin-bottom:4px;}
+.login-wrap .sub{text-align:center;color:var(--ink-dim);font-size:13px;margin-bottom:24px;}
+.err-box{background:var(--danger-bg);color:var(--danger);border-radius:10px;padding:12px;font-size:13px;font-weight:700;margin-bottom:14px;}
+.loading{padding:60px 16px;text-align:center;color:var(--ink-dim);font-size:13.5px;}
+select#f_status_i, select.status-select{width:auto;padding:6px 10px;font-size:12px;}
+</style>
+
+<div class="app-shell" id="app"></div>
+
+<script>
+/* ==========================================================================
+   저장소: Claude Artifact의 db 캡슐. venues / guides / banners / inquiries
+   컬렉션 + settings/site, settings/admin 문서. 여기 있는 데이터가 그대로
+   공개 사이트(아래)에 반영되고, 관리자 화면에서 직접 고칠 수 있습니다.
+   ========================================================================== */
+let DB = null;
+let VENUES=[], GUIDES=[], BANNERS=[], INQUIRIES=[];
+let SETTINGS = {title_zh:"", subtitle_zh:"", footer_zh:"", contact_hint_zh:""};
+let ADMIN_CREDS = {username:"", password:""};
+let ready = {venues:false, guides:false, banners:false, settings:false, admin:false, inquiries:false};
+
+const CATS = [
+  {id:"club", label:"夜店", label_ko:"클럽", icon:"🎧"},
+  {id:"cocktail_bar", label:"鸡尾酒吧", label_ko:"칵테일바", icon:"🍸"},
+  {id:"lounge", label:"酒廊", label_ko:"라운지바", icon:"🛋️"},
+  {id:"rooftop", label:"屋顶酒吧", label_ko:"루프탑바", icon:"🌆"},
+  {id:"pub", label:"酒吧", label_ko:"펍", icon:"🍺"},
+];
+const DISTRICTS = [
+  {id:"gangnam_station", label:"江南站", label_ko:"강남역"},
+  {id:"sinnonhyeon", label:"新论岘", label_ko:"신논현"},
+  {id:"apgujeong_rodeo", label:"狎鸥亭罗德奥", label_ko:"압구정로데오"},
+  {id:"cheongdam", label:"清潭", label_ko:"청담"},
+];
+const catInfo = id => CATS.find(c=>c.id===id) || {label:id,label_ko:id,icon:"📍"};
+const distInfo = id => DISTRICTS.find(d=>d.id===id) || {label:id,label_ko:id};
+const POSITIONS = [
+  {id:"top", label:"상단 배너"},
+  {id:"list", label:"목록 삽입 배너"},
+  {id:"detail", label:"상세 하단 배너"},
+];
+
+const todayStr = () => new Date().toISOString().slice(0,10);
+function bannerActive(b){
+  const t = todayStr();
+  if(b.start_date && t < b.start_date) return false;
+  if(b.end_date && t > b.end_date) return false;
+  return true;
+}
+function daysUntil(dateStr){
+  if(!dateStr) return Infinity;
+  return Math.ceil((new Date(dateStr) - new Date(todayStr())) / 86400000);
+}
+
+/* ============ 이미지 첨부 → 압축 → data URL (별도 서버 업로드 없이 바로 저장) ============ */
+function fileToCompressedDataURL(file, maxW, quality){
+  return new Promise((resolve,reject)=>{
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = new Image();
+      img.onload = () => {
+        const scale = Math.min(1, maxW / img.width);
+        const w = Math.max(1, Math.round(img.width*scale)), h = Math.max(1, Math.round(img.height*scale));
+        const canvas = document.createElement("canvas");
+        canvas.width = w; canvas.height = h;
+        canvas.getContext("2d").drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL("image/jpeg", quality));
+      };
+      img.onerror = () => reject(new Error("이미지를 읽을 수 없습니다"));
+      img.src = e.target.result;
+    };
+    reader.onerror = () => reject(new Error("파일을 읽을 수 없습니다"));
+    reader.readAsDataURL(file);
+  });
+}
+
+/* ============ 부팅 ============ */
+const app = document.getElementById("app");
+window.addEventListener("hashchange", render);
+
+(async function init(){
+  DB = (window.claude && await claude.use("db")) || null;
+  if(!DB){
+    app.innerHTML = `<div class="loading">이 미리보기는 Claude 데스크톱 앱 / claude.ai 웹에서 열어야 실시간 저장 기능이 동작합니다.</div>`;
+    return;
+  }
+  DB.collection("venues").onSnapshot(s=>{ VENUES = s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(a.sort_order??999)-(b.sort_order??999)); ready.venues=true; render(); });
+  DB.collection("guides").onSnapshot(s=>{ GUIDES = s.docs.map(d=>({id:d.id,...d.data()})); ready.guides=true; render(); });
+  DB.collection("banners").onSnapshot(s=>{ BANNERS = s.docs.map(d=>({id:d.id,...d.data()})); ready.banners=true; render(); });
+  DB.collection("inquiries").onSnapshot(s=>{ INQUIRIES = s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.created_at||"").localeCompare(a.created_at||"")); ready.inquiries=true; render(); });
+  DB.doc("settings/site").onSnapshot(s=>{ if(s.exists) SETTINGS = s.data(); ready.settings=true; render(); });
+  DB.doc("settings/admin").onSnapshot(s=>{ if(s.exists) ADMIN_CREDS = s.data(); ready.admin=true; render(); });
+})();
+
+function isAdminLoggedIn(){ return sessionStorage.getItem("gnl_admin") === "1"; }
+
+/* ============ 라우터 ============ */
+function nav(hash){ location.hash = hash; }
+function routeParts(){ return location.hash.replace(/^#\/?/, "").split("/").filter(Boolean); }
+
+function render(){
+  if(!DB) return;
+  if(!Object.values(ready).every(Boolean)){ app.innerHTML = `<div class="loading">불러오는 중...</div>`; return; }
+  const p = routeParts();
+  if(p[0] === "admin") renderAdmin(p.slice(1));
+  else renderPublic(p);
+  window.scrollTo(0,0);
+}
+
+/* ==========================================================================
+   공개 사이트 (2단계와 동일한 화면, 데이터만 실시간 DB에서 읽어옴)
+   ========================================================================== */
+function topbar(active){
+  return `
+  <div class="topbar">
+    <div class="brand" onclick="nav('')">
+      <span class="t">${SETTINGS.title_zh || "(사이트 제목 미설정)"}</span>
+      <span class="s">${SETTINGS.subtitle_zh || ""}</span>
+    </div>
+    <div class="topnav">
+      <a href="#/" class="${active==='home'?'active':''}">首页</a>
+      <a href="#/guides" class="${active==='guides'?'active':''}">攻略</a>
+      <a href="#/contact" class="${active==='contact'?'active':''}">广告合作</a>
+    </div>
+  </div>`;
+}
+function siteFooter(){
+  return `<footer class="site-footer">${SETTINGS.footer_zh||""}<br>${SETTINGS.contact_hint_zh||""}</footer>`;
+}
+function venueThumb(v, big){
+  const photo = v.photos && v.photos[0];
+  const c = catInfo(v.category);
+  const grad = `linear-gradient(135deg, color-mix(in srgb, var(--accent) 55%, #333), color-mix(in srgb, var(--accent-2) 45%, #222))`;
+  if(photo) return `<div class="${big?'slide':'thumb'}"><img src="${photo}" alt=""></div>`;
+  return `<div class="${big?'slide':'thumb'}" style="background:${grad}">${c.icon}</div>`;
+}
+function bannerSlot(kind){
+  if(kind==='top'){
+    const b = BANNERS.find(x=>x.position==='top' && bannerActive(x));
+    if(!b) return `<div class="banner-slot top"><div>📢 <b>在这里投放广告 / 广告招商</b></div><div style="font-size:11px">首页顶部 · 独占展示位</div></div>`;
+    return `<div class="banner-slot filled top"><a href="${b.link_url||'#'}" target="_blank" rel="noopener">${b.image?`<img class="banner-img" src="${b.image}">`:`<div class="adv" style="padding:14px">${b.advertiser_name}</div>`}</a></div>`;
+  }
+  if(kind==='list'){
+    const list = BANNERS.filter(x=>x.position==='list' && bannerActive(x));
+    if(list.length===0) return `<div class="banner-slot"><div>📢 广告招商</div><div style="font-size:11px">列表插入位 · 最多2个</div></div>`;
+    const b = list[0];
+    return `<div class="banner-slot filled">${b.image?`<a href="${b.link_url||'#'}" target="_blank" rel="noopener"><img class="banner-img" src="${b.image}" style="max-height:120px"></a>`:`<a href="${b.link_url||'#'}" target="_blank" rel="noopener" style="padding:14px;display:block"><div class="adv">${b.advertiser_name}</div><div class="cta">点击了解详情 →</div></a>`}</div>`;
+  }
+  if(kind==='detail'){
+    const list = BANNERS.filter(x=>x.position==='detail' && bannerActive(x));
+    if(list.length===0) return `<div class="banner-slot detail-bottom"><div>📢 广告招商</div><div style="font-size:11px">详情页底部 · 最多3个轮播</div></div>`;
+    const idx = Math.floor(Date.now()/4000) % list.length;
+    const b = list[idx];
+    return `<div class="banner-slot filled detail-bottom">${b.image?`<a href="${b.link_url||'#'}" target="_blank" rel="noopener"><img class="banner-img" src="${b.image}"></a>`:`<a href="${b.link_url||'#'}" target="_blank" rel="noopener" style="padding:14px;display:block"><div class="adv">${b.advertiser_name}</div><div class="cta">点击了解详情 →</div></a>`}</div>`;
+  }
+  return "";
+}
+function venueCard(v){
+  const c = catInfo(v.category);
+  return `
+  <div class="venue-card" onclick="nav('venue/${v.id}')">
+    ${v.pinned?'<div class="pin-tag">⭐ 推荐</div>':''}
+    ${venueThumb(v)}
+    <div class="body">
+      <div class="name-zh">${v.name_zh}</div>
+      <div class="name-sub">${v.name_ko} · ${v.name_en||""}</div>
+      <div class="tag-row">
+        <span class="tag">${c.icon} ${c.label}</span>
+        <span class="tag">${distInfo(v.district).label}</span>
+        ${v.passport_required?'<span class="tag passport">需护照</span>':''}
+      </div>
+      <div class="fee-line">${v.fee_female||"-"}${v.fee_male && v.fee_male!==v.fee_female?' / '+v.fee_male:''}</div>
+    </div>
+  </div>`;
+}
+
+let activeCat="all", activeDist="all";
+function setFilter(kind,val){ if(kind==='cat') activeCat=val; else activeDist=val; render(); }
+
+function pageHome(){
+  const visible = VENUES.filter(v=>v.status!=='hidden');
+  const pinned = visible.filter(v=>v.pinned).slice(0,3);
+  const adSlots = Math.max(0, 3 - pinned.length);
+  let list = visible.filter(v => (activeCat==="all"||v.category===activeCat) && (activeDist==="all"||v.district===activeDist));
+
+  const catChips = [{id:"all",label:"全部",icon:"✨"},...CATS].map(c=>`<div class="chip ${activeCat===c.id?'on':''}" onclick="setFilter('cat','${c.id}')">${c.icon} ${c.label}</div>`).join("");
+  const distChips = [{id:"all",label:"全部地区"},...DISTRICTS].map(d=>`<div class="chip ${activeDist===d.id?'on':''}" onclick="setFilter('dist','${d.id}')">${d.label}</div>`).join("");
+
+  let gridHtml = "";
+  list.forEach((v,i)=>{ gridHtml += venueCard(v); if(i===3) gridHtml += `<div style="grid-column:1/-1">${bannerSlot('list')}</div>`; });
+  if(list.length===0) gridHtml = `<div class="empty" style="grid-column:1/-1">该筛选条件下暂无符合的场所 🙈</div>`;
+
+  return `
+    ${topbar('home')}
+    ${bannerSlot('top')}
+    <div class="filter-label">分类</div><div class="filter-row">${catChips}</div>
+    <div class="filter-label">地区</div><div class="filter-row">${distChips}</div>
+    ${(pinned.length||adSlots>0)?`<div class="section-title"><span class="badge-pin">推荐</span>置顶展示位</div>
+    <div class="venue-grid">
+      ${pinned.map(v=>venueCard(v)).join("")}
+      ${Array.from({length:adSlots}).map(()=>`<div class="ad-card"><b>📢 广告招商</b>首页置顶推荐位<br><a href="#/contact" style="color:var(--accent);font-weight:800;">立即咨询 →</a></div>`).join("")}
+    </div>`:""}
+    <div class="section-title">全部场所 · ${list.length}家</div>
+    <div class="venue-grid">${gridHtml}</div>
+    ${siteFooter()}
+  `;
+}
+
+function pageVenue(id){
+  const v = VENUES.find(x=>String(x.id)===String(id));
+  if(!v) return topbar()+`<div class="empty">未找到该场所</div>`;
+  const c = catInfo(v.category);
+  const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(v.maps_q||v.address_ko||"")}`;
+  const photos = (v.photos&&v.photos.length)?v.photos:[null];
+  return `
+    ${topbar()}
+    <div class="gallery">${photos.map(p=>p?`<div class="slide"><img src="${p}"></div>`:venueThumb(v,true)).join("")}</div>
+    <div class="detail-body">
+      <div class="detail-title-row">
+        <div><h1>${v.name_zh}</h1><p class="sub">${v.name_ko} · ${v.name_en||""}</p></div>
+        <button class="back-btn" onclick="history.back()">←</button>
+      </div>
+      <div class="tag-row" style="margin-top:8px;">
+        <span class="tag">${c.icon} ${c.label}</span>
+        <span class="tag">${distInfo(v.district).label}</span>
+        ${v.passport_required?'<span class="tag passport">需护照</span>':''}
+      </div>
+      <button class="taxi-btn" onclick="openTaxi('${v.id}')">🚕 向司机出示 / 택시 기사에게 보여주기</button>
+      <div class="info-card">
+        <div class="info-row"><div class="k">营业时间</div><div class="v">${v.hours||"-"}</div></div>
+        <div class="info-row"><div class="k">入场费</div><div class="v"><b>女 ${v.fee_female||"-"}</b> · 男 ${v.fee_male||"-"}<br><span style="color:var(--ink-dim);font-size:12px">${v.fee_note||""}</span></div></div>
+        <div class="info-row"><div class="k">Dress Code</div><div class="v">${v.dress_code||"-"}</div></div>
+        <div class="info-row"><div class="k">护照要求</div><div class="v"><span class="${v.passport_required?'passport-yes':'passport-no'}">${v.passport_required?'必须携带护照':'通常无需护照'}</span><br><span style="color:var(--ink-dim);font-size:12px">${v.passport_note||""}</span></div></div>
+        <div class="info-row"><div class="k">人均预算</div><div class="v">${v.avg_budget||"-"}</div></div>
+      </div>
+      <div class="addr-card">
+        <div class="lang-line"><b>KO</b>${v.address_ko||"-"}</div>
+        <div class="lang-line"><b>ZH</b>${v.address_zh||"-"}</div>
+        <div class="addr-actions"><a class="btn-outline" href="${mapsUrl}" target="_blank" rel="noopener">📍 Google 地图</a></div>
+      </div>
+      ${(v.wechat||v.instagram)?`<div class="social-row">${v.wechat?`<div class="social-pill">💬 ${v.wechat}</div>`:""}${v.instagram?`<div class="social-pill">📷 ${v.instagram}</div>`:""}</div>`:""}
+      ${bannerSlot('detail')}
+    </div>
+    ${siteFooter()}
+    <div id="taxi-root"></div>
+  `;
+}
+function openTaxi(id){
+  const v = VENUES.find(x=>String(x.id)===String(id));
+  document.getElementById("taxi-root").innerHTML = `
+  <div class="taxi-overlay">
+    <button class="close-x" onclick="document.getElementById('taxi-root').innerHTML=''">✕</button>
+    <div class="hint">请把手机递给司机 · 기사님께 보여주세요</div>
+    <div class="venue-name">${v.name_ko} · ${v.name_zh}</div>
+    <div class="addr">${v.address_ko||""}</div>
+  </div>`;
+}
+function pageGuides(){
+  return `${topbar('guides')}<div class="section-title">出行攻略</div>
+    ${GUIDES.filter(g=>g.status!=='draft').map(g=>`
+      <div class="guide-card" onclick="nav('guide/${g.id}')">
+        <div class="thumb" style="background:linear-gradient(135deg,color-mix(in srgb,var(--accent-2) 55%,#333),color-mix(in srgb,var(--accent) 40%,#222))">${g.cover_image?`<img src="${g.cover_image}">`:(g.cover_emoji||'📄')}</div>
+        <div><div class="g-title">${g.title}</div><div class="g-excerpt">${(g.body||"").slice(0,42)}…</div></div>
+      </div>`).join("")}
+    ${siteFooter()}`;
+}
+function pageGuideDetail(id){
+  const g = GUIDES.find(x=>String(x.id)===String(id));
+  if(!g) return topbar()+`<div class="empty">未找到该文章</div>`;
+  const paras = (g.body||"").split(/\n{2,}/).filter(Boolean);
+  return `${topbar('guides')}
+    <div class="detail-body" style="padding-bottom:0;">
+      <div class="detail-title-row"><h1 style="font-size:19px;">${g.cover_emoji||'📄'} ${g.title}</h1><button class="back-btn" onclick="nav('guides')">←</button></div>
+    </div>
+    <div class="guide-content">${paras.map(p=>`<p>${p}</p>`).join("")}</div>
+    ${siteFooter()}`;
+}
+function pageContact(justSubmitted){
+  const html = `${topbar('contact')}
+    <div class="contact-wrap">
+      <h1>광고 문의</h1>
+      <p class="note">배너 광고 · 상단 고정 노출 문의는 아래 양식을 작성해주세요. 담당자가 직접 연락드립니다.</p>
+      ${justSubmitted?`<div class="success-box">✅ 문의가 접수되었습니다. 확인 후 담당자가 연락드리겠습니다.</div>`:""}
+      <form id="contact-form">
+        <div class="field"><label>업소명</label><input required name="venue_name" placeholder="예: OO클럽"></div>
+        <div class="field"><label>담당자명</label><input required name="contact_name" placeholder="담당자 성함"></div>
+        <div class="field"><label>연락처</label><input required name="phone" placeholder="010-0000-0000"></div>
+        <div class="field"><label>희망 광고 자리</label>
+          <select name="position"><option>상단 배너</option><option>목록 삽입 배너</option><option>상세 하단 배너</option><option>상단 고정 노출</option></select>
+        </div>
+        <div class="field"><label>문의 내용</label><textarea name="message" placeholder="문의하실 내용을 적어주세요"></textarea></div>
+        <button class="submit-btn" type="submit">문의 제출</button>
+      </form>
+    </div>
+    ${siteFooter()}`;
+  app.innerHTML = html;
+  document.getElementById("contact-form").addEventListener("submit", async e=>{
+    e.preventDefault();
+    const f = new FormData(e.target);
+    await DB.collection("inquiries").add({
+      venue_name:f.get("venue_name"), contact_name:f.get("contact_name"), phone:f.get("phone"),
+      desired_position:f.get("position"), message:f.get("message"),
+      status:"신규", created_at:new Date().toISOString()
+    });
+    pageContact(true);
+  });
+}
+function renderPublic(p){
+  if(p[0]==='venue') app.innerHTML = pageVenue(p[1]);
+  else if(p[0]==='guides') app.innerHTML = pageGuides();
+  else if(p[0]==='guide') app.innerHTML = pageGuideDetail(p[1]);
+  else if(p[0]==='contact') { pageContact(false); return; }
+  else app.innerHTML = pageHome();
+}
+
+/* ==========================================================================
+   관리자 화면 — #/admin/... (로그인 후 사용)
+   ========================================================================== */
+function adminLogin(){
+  app.innerHTML = `
+    <div class="login-wrap">
+      <h1>🔒 관리자 로그인</h1>
+      <p class="sub">江南夜生活指南 · 관리자 전용</p>
+      <div id="login-err"></div>
+      <form id="login-form">
+        <div class="field"><label>아이디</label><input required name="username" autocomplete="username"></div>
+        <div class="field"><label>비밀번호</label><input required type="password" name="password" autocomplete="current-password"></div>
+        <button class="submit-btn" type="submit">로그인</button>
+      </form>
+      <p class="sub" style="margin-top:18px;"><a href="#/" style="color:var(--accent);font-weight:700;">← 공개 사이트로 돌아가기</a></p>
+    </div>`;
+  document.getElementById("login-form").addEventListener("submit", e=>{
+    e.preventDefault();
+    const f = new FormData(e.target);
+    if(f.get("username")===ADMIN_CREDS.username && f.get("password")===ADMIN_CREDS.password){
+      sessionStorage.setItem("gnl_admin","1");
+      nav("admin/venues");
+    } else {
+      document.getElementById("login-err").innerHTML = `<div class="err-box">아이디 또는 비밀번호가 올바르지 않습니다.</div>`;
+    }
+  });
+}
+function adminLogout(){ sessionStorage.removeItem("gnl_admin"); nav(""); }
+
+function adminShell(active){
+  const tabs = [
+    ["venues","업소 관리"],["guides","가이드 관리"],["banners","배너 관리"],
+    ["settings","사이트 설정"],["inquiries","문의함"],
+  ];
+  return `
+    <div class="admin-topbar">
+      <div class="title">🔒 관리자</div>
+      <div class="links"><a href="#/">공개 사이트 보기 ↗</a><a href="#" onclick="adminLogout();return false;">로그아웃</a></div>
+    </div>
+    <div class="admin-tabs">${tabs.map(([k,l])=>`<a href="#/admin/${k}" class="${active===k?'active':''}">${l}</a>`).join("")}</div>
+  `;
+}
+
+function statusPill(v){
+  if(v.status==='hidden') return `<span class="status-pill hidden">숨김</span>`;
+  return `<span class="status-pill live">공개중</span>`;
+}
+function bannerStatusPill(b){
+  if(!bannerActive(b)) return `<span class="status-pill expired">만료됨</span>`;
+  const d = daysUntil(b.end_date);
+  if(d<=7) return `<span class="status-pill warn">⚠ ${d}일 후 만료</span>`;
+  return `<span class="status-pill live">노출중</span>`;
+}
+
+function venueListView(){
+  return `
+    <div class="admin-body">
+      <div class="row-between"><div>업소 총 ${VENUES.length}곳</div><a class="btn" href="#/admin/venues/new">+ 새 업소 등록</a></div>
+      <div class="admin-list">
+        ${VENUES.map(v=>`
+          <div class="admin-row">
+            <div class="thumb-sm" style="background:linear-gradient(135deg,var(--accent),var(--accent-2))">${v.photos&&v.photos[0]?`<img src="${v.photos[0]}">`:catInfo(v.category).icon}</div>
+            <div class="main">
+              <div class="t1">${v.name_zh} ${v.pinned?'⭐':''}</div>
+              <div class="t2">${v.name_ko} · ${catInfo(v.category).label_ko} · ${distInfo(v.district).label_ko} · 순서 ${v.sort_order??'-'} ${statusPill(v)}</div>
+            </div>
+            <div class="acts">
+              <a class="btn ghost small" href="#/admin/venues/edit/${v.id}">수정</a>
+              <button class="btn danger small" onclick="deleteVenue('${v.id}')">삭제</button>
+            </div>
+          </div>`).join("") || `<div class="empty">등록된 업소가 없습니다.</div>`}
+      </div>
+    </div>`;
+}
+async function deleteVenue(id){
+  if(!confirm("이 업소를 삭제할까요? 되돌릴 수 없습니다.")) return;
+  await DB.collection("venues").doc(id).delete();
+}
+
+let formPhotos = [];
+function venueFormView(v){
+  formPhotos = v ? (v.photos||[]) : [];
+  const catOpts = CATS.map(c=>`<option value="${c.id}" ${v&&v.category===c.id?'selected':''}>${c.icon} ${c.label_ko} / ${c.label}</option>`).join("");
+  const distOpts = DISTRICTS.map(d=>`<option value="${d.id}" ${v&&v.district===d.id?'selected':''}>${d.label_ko} / ${d.label}</option>`).join("");
+  setTimeout(()=>refreshPhotoPreview(), 0);
+  return `
+  <div class="admin-body">
+    <div class="row-between"><h2 style="margin:0;font-size:16px;">${v?'업소 수정':'새 업소 등록'}</h2><a class="btn ghost small" href="#/admin/venues">← 목록으로</a></div>
+    <div class="form-card">
+      <div class="form-grid">
+        <div class="field"><label>업소명 (중국어)</label><input id="f_name_zh" value="${v?.name_zh||''}"></div>
+        <div class="field"><label>업소명 (한국어)</label><input id="f_name_ko" value="${v?.name_ko||''}"></div>
+        <div class="field span2"><label>업소명 (영문, 선택)</label><input id="f_name_en" value="${v?.name_en||''}"></div>
+        <div class="field"><label>카테고리</label><select id="f_category">${catOpts}</select></div>
+        <div class="field"><label>지역</label><select id="f_district">${distOpts}</select></div>
+        <div class="field span2"><label>영업시간 / 휴무</label><input id="f_hours" value="${v?.hours||''}" placeholder="예: 매일 22:00-05:00, 월요일 휴무"></div>
+        <div class="field"><label>입장료 (여성)</label><input id="f_fee_female" value="${v?.fee_female||''}"></div>
+        <div class="field"><label>입장료 (남성)</label><input id="f_fee_male" value="${v?.fee_male||''}"></div>
+        <div class="field span2"><label>입장료 비고 (요일별 차등 등)</label><input id="f_fee_note" value="${v?.fee_note||''}"></div>
+        <div class="field span2"><label>드레스코드</label><input id="f_dress_code" value="${v?.dress_code||''}" placeholder="예: 슬리퍼·반바지 금지"></div>
+        <div class="field span2">
+          <label class="checkline"><input type="checkbox" id="f_passport" ${v?.passport_required?'checked':''}> 외국인 여권 지참 필수</label>
+          <input id="f_passport_note" value="${v?.passport_note||''}" placeholder="여권 관련 설명 (선택)">
+        </div>
+        <div class="field span2"><label>평균 예산</label><input id="f_avg_budget" value="${v?.avg_budget||''}"></div>
+        <div class="field"><label>주소 (한국어) — 택시기사용</label><input id="f_address_ko" value="${v?.address_ko||''}"></div>
+        <div class="field"><label>주소 (중국어)</label><input id="f_address_zh" value="${v?.address_zh||''}"></div>
+        <div class="field span2"><label>구글맵 검색어/주소</label><input id="f_maps_q" value="${v?.maps_q||''}" placeholder="구글맵 링크 생성에 사용됩니다"></div>
+        <div class="field"><label>위챗 ID (선택)</label><input id="f_wechat" value="${v?.wechat||''}"></div>
+        <div class="field"><label>인스타그램 (선택)</label><input id="f_instagram" value="${v?.instagram||''}"></div>
+        <div class="field"><label>노출 순서</label><input id="f_sort_order" type="number" value="${v?.sort_order??0}"></div>
+        <div class="field">
+          <label>상태</label>
+          <select id="f_status"><option value="live" ${v?.status!=='hidden'?'selected':''}>공개</option><option value="hidden" ${v?.status==='hidden'?'selected':''}>숨김</option></select>
+        </div>
+        <div class="field span2"><label class="checkline"><input type="checkbox" id="f_pinned" ${v?.pinned?'checked':''}> 메인 상단 "추천" 고정 노출 (광고 상품, 최대 3곳)</label></div>
+        <div class="field span2">
+          <label>사진 (최대 3장 · 파일 첨부, 자동으로 용량을 줄여 저장합니다)</label>
+          <div class="photo-grid" id="photo-preview"></div>
+          <label class="upload-btn">+ 사진 첨부<input type="file" accept="image/*" multiple style="display:none" onchange="handlePhotoUpload(event)"></label>
+        </div>
+      </div>
+      <button class="submit-btn" style="margin-top:16px;" onclick="saveVenue('${v?v.id:''}')">저장하기</button>
+    </div>
+  </div>`;
+}
+function refreshPhotoPreview(){
+  const el = document.getElementById("photo-preview");
+  if(!el) return;
+  el.innerHTML = formPhotos.map((p,i)=>`<div class="photo-thumb"><img src="${p}"><button class="rm" onclick="removePhoto(${i})">✕</button></div>`).join("") || `<span style="font-size:12px;color:var(--ink-dim)">아직 첨부된 사진이 없습니다</span>`;
+}
+function removePhoto(i){ formPhotos.splice(i,1); refreshPhotoPreview(); }
+async function handlePhotoUpload(e){
+  const files = Array.from(e.target.files||[]).slice(0, 3-formPhotos.length);
+  for(const file of files){
+    try{
+      const dataUrl = await fileToCompressedDataURL(file, 480, 0.55);
+      formPhotos.push(dataUrl);
+    }catch(err){ alert("사진을 처리하지 못했습니다: "+err.message); }
+  }
+  refreshPhotoPreview();
+  e.target.value = "";
+}
+async function saveVenue(id){
+  const data = {
+    name_zh: document.getElementById("f_name_zh").value.trim(),
+    name_ko: document.getElementById("f_name_ko").value.trim(),
+    name_en: document.getElementById("f_name_en").value.trim(),
+    category: document.getElementById("f_category").value,
+    district: document.getElementById("f_district").value,
+    hours: document.getElementById("f_hours").value.trim(),
+    fee_female: document.getElementById("f_fee_female").value.trim(),
+    fee_male: document.getElementById("f_fee_male").value.trim(),
+    fee_note: document.getElementById("f_fee_note").value.trim(),
+    dress_code: document.getElementById("f_dress_code").value.trim(),
+    passport_required: document.getElementById("f_passport").checked,
+    passport_note: document.getElementById("f_passport_note").value.trim(),
+    avg_budget: document.getElementById("f_avg_budget").value.trim(),
+    address_ko: document.getElementById("f_address_ko").value.trim(),
+    address_zh: document.getElementById("f_address_zh").value.trim(),
+    maps_q: document.getElementById("f_maps_q").value.trim(),
+    wechat: document.getElementById("f_wechat").value.trim(),
+    instagram: document.getElementById("f_instagram").value.trim(),
+    sort_order: Number(document.getElementById("f_sort_order").value)||0,
+    status: document.getElementById("f_status").value,
+    pinned: document.getElementById("f_pinned").checked,
+    photos: formPhotos,
+  };
+  if(!data.name_zh){ alert("업소명(중국어)을 입력해주세요."); return; }
+  try{
+    if(id) await DB.collection("venues").doc(id).update(data);
+    else await DB.collection("venues").add(data);
+    nav("admin/venues");
+  }catch(err){ alert("저장 실패: "+(err.message||"용량이 너무 클 수 있습니다. 사진 개수를 줄여보세요.")); }
+}
+
+function guideListView(){
+  return `<div class="admin-body">
+    <div class="row-between"><div>가이드 글 총 ${GUIDES.length}개</div><a class="btn" href="#/admin/guides/new">+ 새 글 등록</a></div>
+    <div class="admin-list">
+      ${GUIDES.map(g=>`
+        <div class="admin-row">
+          <div class="thumb-sm" style="background:linear-gradient(135deg,var(--accent-2),var(--accent))">${g.cover_image?`<img src="${g.cover_image}">`:(g.cover_emoji||'📄')}</div>
+          <div class="main"><div class="t1">${g.title}</div><div class="t2">${g.status==='draft'?'<span class="status-pill hidden">임시저장</span>':'<span class="status-pill live">공개</span>'}</div></div>
+          <div class="acts"><a class="btn ghost small" href="#/admin/guides/edit/${g.id}">수정</a><button class="btn danger small" onclick="deleteGuide('${g.id}')">삭제</button></div>
+        </div>`).join("") || `<div class="empty">등록된 글이 없습니다.</div>`}
+    </div>
+  </div>`;
+}
+async function deleteGuide(id){ if(confirm("이 글을 삭제할까요?")) await DB.collection("guides").doc(id).delete(); }
+
+let guideCoverImg = "";
+function guideFormView(g){
+  guideCoverImg = g?.cover_image || "";
+  const emojis = ["📄","🛂","👗","🚕","🗺️","🍸","🎉","💡"];
+  setTimeout(()=>refreshGuideCoverPreview(), 0);
+  return `<div class="admin-body">
+    <div class="row-between"><h2 style="margin:0;font-size:16px;">${g?'글 수정':'새 글 등록'}</h2><a class="btn ghost small" href="#/admin/guides">← 목록으로</a></div>
+    <div class="form-card">
+      <div class="field"><label>제목</label><input id="g_title" value="${g?.title||''}"></div>
+      <div class="field"><label>대표 아이콘 (사진 없을 때 표시)</label>
+        <select id="g_cover_emoji">${emojis.map(e=>`<option ${g?.cover_emoji===e?'selected':''}>${e}</option>`).join("")}</select>
+      </div>
+      <div class="field">
+        <label>대표 사진 (선택, 파일 첨부)</label>
+        <div class="photo-grid" id="guide-cover-preview"></div>
+        <label class="upload-btn">+ 사진 첨부<input type="file" accept="image/*" style="display:none" onchange="handleGuideCoverUpload(event)"></label>
+      </div>
+      <div class="field"><label>본문 (문단 사이는 빈 줄로 구분)</label><textarea id="g_body" style="min-height:180px;">${g?.body||''}</textarea></div>
+      <div class="field"><label>상태</label><select id="g_status"><option value="live" ${g?.status!=='draft'?'selected':''}>공개</option><option value="draft" ${g?.status==='draft'?'selected':''}>임시저장</option></select></div>
+      <button class="submit-btn" onclick="saveGuide('${g?g.id:''}')">저장하기</button>
+    </div>
+  </div>`;
+}
+function refreshGuideCoverPreview(){
+  const el = document.getElementById("guide-cover-preview");
+  if(!el) return;
+  el.innerHTML = guideCoverImg ? `<div class="photo-thumb"><img src="${guideCoverImg}"><button class="rm" onclick="guideCoverImg='';refreshGuideCoverPreview()">✕</button></div>` : `<span style="font-size:12px;color:var(--ink-dim)">첨부된 사진 없음</span>`;
+}
+async function handleGuideCoverUpload(e){
+  const file = e.target.files[0]; if(!file) return;
+  try{ guideCoverImg = await fileToCompressedDataURL(file, 480, 0.55); refreshGuideCoverPreview(); }
+  catch(err){ alert("사진을 처리하지 못했습니다: "+err.message); }
+  e.target.value = "";
+}
+async function saveGuide(id){
+  const data = {
+    title: document.getElementById("g_title").value.trim(),
+    cover_emoji: document.getElementById("g_cover_emoji").value,
+    cover_image: guideCoverImg,
+    body: document.getElementById("g_body").value,
+    status: document.getElementById("g_status").value,
+  };
+  if(!data.title){ alert("제목을 입력해주세요."); return; }
+  try{
+    if(id) await DB.collection("guides").doc(id).update(data);
+    else await DB.collection("guides").add(data);
+    nav("admin/guides");
+  }catch(err){ alert("저장 실패: "+(err.message||"")); }
+}
+
+function bannerListView(){
+  return `<div class="admin-body">
+    <div class="row-between"><div>배너 총 ${BANNERS.length}개</div><a class="btn" href="#/admin/banners/new">+ 새 배너 등록</a></div>
+    <div class="admin-list">
+      ${BANNERS.map(b=>`
+        <div class="admin-row">
+          <div class="thumb-sm" style="background:linear-gradient(135deg,var(--accent),var(--accent-2))">${b.image?`<img src="${b.image}">`:'📢'}</div>
+          <div class="main"><div class="t1">${b.advertiser_name} · ${(POSITIONS.find(p=>p.id===b.position)||{}).label||b.position}</div>
+          <div class="t2">${b.start_date||'-'} ~ ${b.end_date||'-'} ${bannerStatusPill(b)}</div></div>
+          <div class="acts"><a class="btn ghost small" href="#/admin/banners/edit/${b.id}">수정</a><button class="btn danger small" onclick="deleteBanner('${b.id}')">삭제</button></div>
+        </div>`).join("") || `<div class="empty">등록된 배너가 없습니다.</div>`}
+    </div>
+  </div>`;
+}
+async function deleteBanner(id){ if(confirm("이 배너를 삭제할까요?")) await DB.collection("banners").doc(id).delete(); }
+
+let bannerImg = "";
+function bannerFormView(b){
+  bannerImg = b?.image || "";
+  setTimeout(()=>refreshBannerImgPreview(), 0);
+  return `<div class="admin-body">
+    <div class="row-between"><h2 style="margin:0;font-size:16px;">${b?'배너 수정':'새 배너 등록'}</h2><a class="btn ghost small" href="#/admin/banners">← 목록으로</a></div>
+    <div class="form-card">
+      <div class="field"><label>광고 자리</label><select id="b_position">${POSITIONS.map(p=>`<option value="${p.id}" ${b?.position===p.id?'selected':''}>${p.label}</option>`).join("")}</select></div>
+      <div class="field"><label>광고주명</label><input id="b_advertiser" value="${b?.advertiser_name||''}"></div>
+      <div class="field"><label>클릭 시 이동 링크 (선택)</label><input id="b_link" value="${b?.link_url||''}" placeholder="https://..."></div>
+      <div class="field">
+        <label>배너 이미지 (파일 첨부, 없으면 광고주명 텍스트로 표시)</label>
+        <div class="photo-grid" id="banner-img-preview"></div>
+        <label class="upload-btn">+ 이미지 첨부<input type="file" accept="image/*" style="display:none" onchange="handleBannerImgUpload(event)"></label>
+      </div>
+      <div class="form-grid">
+        <div class="field"><label>시작일</label><input id="b_start" type="date" value="${b?.start_date||todayStr()}"></div>
+        <div class="field"><label>종료일</label><input id="b_end" type="date" value="${b?.end_date||''}"></div>
+      </div>
+      <p class="field hint">종료일이 지나면 공개 사이트에서 자동으로 내려갑니다. 종료 7일 전부터는 이 목록에 노란색으로 표시됩니다.</p>
+      <button class="submit-btn" onclick="saveBanner('${b?b.id:''}')">저장하기</button>
+    </div>
+  </div>`;
+}
+function refreshBannerImgPreview(){
+  const el = document.getElementById("banner-img-preview");
+  if(!el) return;
+  el.innerHTML = bannerImg ? `<div class="photo-thumb"><img src="${bannerImg}"><button class="rm" onclick="bannerImg='';refreshBannerImgPreview()">✕</button></div>` : `<span style="font-size:12px;color:var(--ink-dim)">첨부된 이미지 없음</span>`;
+}
+async function handleBannerImgUpload(e){
+  const file = e.target.files[0]; if(!file) return;
+  try{ bannerImg = await fileToCompressedDataURL(file, 700, 0.6); refreshBannerImgPreview(); }
+  catch(err){ alert("이미지를 처리하지 못했습니다: "+err.message); }
+  e.target.value = "";
+}
+async function saveBanner(id){
+  const data = {
+    position: document.getElementById("b_position").value,
+    advertiser_name: document.getElementById("b_advertiser").value.trim(),
+    link_url: document.getElementById("b_link").value.trim(),
+    image: bannerImg,
+    start_date: document.getElementById("b_start").value,
+    end_date: document.getElementById("b_end").value,
+  };
+  if(!data.advertiser_name){ alert("광고주명을 입력해주세요."); return; }
+  try{
+    if(id) await DB.collection("banners").doc(id).update(data);
+    else await DB.collection("banners").add(data);
+    nav("admin/banners");
+  }catch(err){ alert("저장 실패: "+(err.message||"")); }
+}
+
+function settingsView(){
+  return `<div class="admin-body">
+    <div class="form-card">
+      <p style="margin-top:0;color:var(--ink-dim);font-size:13px;">여기서 고치는 내용은 공개 사이트 상단 제목/부제목/하단 문구에 즉시 반영됩니다.</p>
+      <div class="field"><label>사이트 제목 (중국어)</label><input id="s_title" value="${SETTINGS.title_zh||''}"></div>
+      <div class="field"><label>사이트 부제목 (중국어)</label><input id="s_subtitle" value="${SETTINGS.subtitle_zh||''}"></div>
+      <div class="field"><label>하단 안내 문구</label><input id="s_footer" value="${SETTINGS.footer_zh||''}"></div>
+      <div class="field"><label>하단 문의 안내 문구</label><input id="s_contact_hint" value="${SETTINGS.contact_hint_zh||''}"></div>
+      <button class="submit-btn" onclick="saveSettings()">저장하기</button>
+    </div>
+  </div>`;
+}
+async function saveSettings(){
+  await DB.doc("settings/site").set({
+    title_zh: document.getElementById("s_title").value.trim(),
+    subtitle_zh: document.getElementById("s_subtitle").value.trim(),
+    footer_zh: document.getElementById("s_footer").value.trim(),
+    contact_hint_zh: document.getElementById("s_contact_hint").value.trim(),
+  });
+  alert("저장되었습니다.");
+}
+
+function inquiriesView(){
+  return `<div class="admin-body">
+    <div class="row-between"><div>문의 총 ${INQUIRIES.length}건</div></div>
+    <div class="admin-list">
+      ${INQUIRIES.map(q=>`
+        <div class="admin-row">
+          <div class="main">
+            <div class="t1">${q.venue_name} · ${q.desired_position}</div>
+            <div class="t2">${q.contact_name} / ${q.phone} · ${(q.created_at||'').slice(0,16).replace('T',' ')}</div>
+            <div class="t2" style="margin-top:4px;white-space:pre-wrap;">${q.message||''}</div>
+          </div>
+          <div class="acts">
+            <select class="status-select" onchange="updateInquiryStatus('${q.id}', this.value)">
+              ${["신규","처리중","완료"].map(s=>`<option ${q.status===s?'selected':''}>${s}</option>`).join("")}
+            </select>
+          </div>
+        </div>`).join("") || `<div class="empty">아직 접수된 문의가 없습니다.</div>`}
+    </div>
+  </div>`;
+}
+async function updateInquiryStatus(id, status){ await DB.collection("inquiries").doc(id).update({status}); }
+
+function renderAdmin(p){
+  if(p[0]==='login'){ adminLogin(); return; }
+  if(!isAdminLoggedIn()){ nav("admin/login"); return; }
+  const section = p[0] || "venues";
+  let body = "";
+  if(section==='venues'){
+    if(p[1]==='new') body = venueFormView(null);
+    else if(p[1]==='edit') body = venueFormView(VENUES.find(v=>String(v.id)===String(p[2])));
+    else body = venueListView();
+  } else if(section==='guides'){
+    if(p[1]==='new') body = guideFormView(null);
+    else if(p[1]==='edit') body = guideFormView(GUIDES.find(g=>String(g.id)===String(p[2])));
+    else body = guideListView();
+  } else if(section==='banners'){
+    if(p[1]==='new') body = bannerFormView(null);
+    else if(p[1]==='edit') body = bannerFormView(BANNERS.find(b=>String(b.id)===String(p[2])));
+    else body = bannerListView();
+  } else if(section==='settings'){ body = settingsView(); }
+  else if(section==='inquiries'){ body = inquiriesView(); }
+  else { body = venueListView(); }
+  app.innerHTML = adminShell(section) + body;
+}
+</script>
